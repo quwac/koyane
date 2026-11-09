@@ -4,19 +4,38 @@
 
 <h1 align="center">Koyane</h1>
 
-[![Verify](https://github.com/quwac/koyane/actions/workflows/ci.yml/badge.svg)](https://github.com/quwac/koyane/actions/workflows/ci.yml)
-[![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
-[![Kotlin/Wasm](https://img.shields.io/badge/Kotlin%2FWasm-wasmJs-654FF0?logo=webassembly&logoColor=white)](https://kotlinlang.org/docs/wasm-overview.html)
-[![Bun](https://img.shields.io/badge/Bun-tooling-14151A?logo=bun&logoColor=white)](https://bun.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-3DA639)](LICENSE)
+<p align="center">
+  <a href="https://github.com/quwac/koyane/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/badge/CI-Verify-2088FF?logo=githubactions&amp;logoColor=white" alt="CI: Verify">
+  </a>
+  <a href="https://kotlinlang.org/">
+    <img src="https://img.shields.io/badge/Kotlin-2.4.21-7F52FF?logo=kotlin&amp;logoColor=white" alt="Kotlin 2.4.21">
+  </a>
+  <a href="https://kotlinlang.org/docs/js-overview.html">
+    <img src="https://img.shields.io/badge/Kotlin-JS-7F52FF?logo=kotlin&amp;logoColor=white" alt="Kotlin/JS">
+  </a>
+  <a href="https://kotlinlang.org/docs/wasm-overview.html">
+    <img src="https://img.shields.io/badge/Kotlin-Wasm-7F52FF?logo=kotlin&amp;logoColor=white" alt="Kotlin/Wasm">
+  </a>
+  <a href="https://gradle.org/">
+    <img src="https://img.shields.io/badge/Gradle-9.8.2-02303A?logo=gradle&amp;logoColor=white" alt="Gradle 9.8.2">
+  </a>
+  <a href="https://openjdk.org/">
+    <img src="https://img.shields.io/badge/JDK-17-007396?logo=openjdk&amp;logoColor=white" alt="JDK 17">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+  </a>
+</p>
 
-Koyane is a Kotlin framework for Cloudflare Workers.
+Koyane (こやね, pronounced "koh-yah-neh") is a Kotlin framework with a typed plugin API.
 Applications are written in common Kotlin and built for Kotlin/JS or Kotlin/Wasm.
+Core and HTTP are runtime-independent; adapters connect applications to host runtimes.
 
 The API is experimental.
 
+- [Cheat sheet](docs/CHEATSHEET.md)
 - [Workers example](examples/hello-workers/README.md)
-- [Design](docs/design.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Application
@@ -139,8 +158,9 @@ local D1 migrations, CORS, Bearer authentication, JSON, and typed D1 CRUD.
 
 ## Scope
 
-Koyane supports Kotlin/JS and Kotlin/Wasm Cloudflare Workers.
-Core and HTTP remain independent of Fetch and host bindings.
+The current build targets Kotlin/JS and Kotlin/Wasm.
+Core and HTTP are independent of Fetch and host bindings.
+`koyane-workers` provides the Cloudflare Workers adapter.
 The current HTTP model uses buffered text bodies.
 Binary or streaming bodies, automatic request binding, OpenAPI generation, client generation,
 and a JVM server adapter are not part of this repository.

@@ -32,8 +32,9 @@
 
 ## Scope and modules
 
-Core, HTTP, authentication, CORS, error handling, Logging, and the Fetch adapter
-target Kotlin `js` and `wasmJs` on Cloudflare Workers. JVM, WASI, Native,
+Core, HTTP, authentication, CORS, error handling, and Logging provide
+runtime-independent APIs targeting Kotlin `js` and `wasmJs`.
+`koyane-workers` provides the Cloudflare Workers Fetch adapter. JVM, WASI, Native,
 GraphQL, gRPC, OpenAPI, client generation, and compiler plugins are outside this
 version's scope. Kagiroi provides D1 SQL access in the example;
 `koyane-workers-d1` connects the Cloudflare binding, Kagiroi driver, and

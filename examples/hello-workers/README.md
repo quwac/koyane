@@ -126,4 +126,4 @@ mise run deploy:dry-run:wasm
 mise run deploy:dry-run:js
 ```
 
-See the [design](../../docs/design.md) for framework behavior and limits.
+See the [cheat sheet](../../docs/CHEATSHEET.md) for routing, inputs, responses, plugins, and testing.
