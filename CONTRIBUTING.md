@@ -2,7 +2,8 @@
 
 Run these commands from the repository root.
 
-The [README](README.md) covers the framework API.
+The [README](README.md) covers supported runtimes, dependencies, and a minimal application.
+The [cheat sheet](docs/CHEATSHEET.md) covers APIs and their behavior.
 The [Workers example](examples/hello-workers/README.md) covers local execution and deployment.
 The [Lambda Web Functions example](examples/hello-lambda-web/README.md) covers Node.js execution and AWS packaging.
 
