@@ -68,7 +68,7 @@ kotlin {
 }
 ```
 
-### Node.js and Lambda Web Functions dependencies
+### Node.js dependencies
 
 ```kotlin
 repositories {
@@ -114,10 +114,24 @@ See the [cheat sheet](docs/CHEATSHEET.md) for API examples and behavior.
 
 The current build targets Kotlin/JS and Kotlin/Wasm.
 Core and HTTP are independent of Fetch and host bindings.
-`koyane-workers` provides the Cloudflare Workers adapter.
-`koyane-node` provides the Node.js HTTP adapter, including AWS Lambda Web Functions.
+`koyane-workers` provides the [Cloudflare Workers](https://developers.cloudflare.com/workers/) adapter.
+`koyane-node` provides a standard Node.js HTTP server. Hosting options include:
+
+| Provider | Run directly on Node.js | Run as a container |
+| --- | --- | --- |
+| AWS | [Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html), [Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html) | [Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html) (including Fargate and [Express Mode](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-overview.html)), [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-concepts.html), [Elastic Beanstalk Docker](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_docker.html), [Lightsail container services](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-container-services.html) |
+| Google Cloud | [Compute Engine](https://docs.cloud.google.com/compute/docs/overview) | [Cloud Run](https://docs.cloud.google.com/run/docs/container-contract), [GKE](https://docs.cloud.google.com/kubernetes-engine/docs/deploy-app-cluster), [App Engine flexible custom runtimes](https://docs.cloud.google.com/appengine/docs/flexible/custom-runtimes/build) |
+| Microsoft Azure | [Azure Virtual Machines](https://learn.microsoft.com/en-us/azure/virtual-machines/overview) | [Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/ingress-how-to), [App Service custom containers](https://learn.microsoft.com/azure/app-service/configure-custom-container), [AKS](https://learn.microsoft.com/en-us/azure/aks/secure-aks) |
+| Oracle Cloud | [OCI Compute](https://docs.oracle.com/en-us/iaas/Content/Compute/Concepts/computeoverview.htm) | [OCI Container Instances](https://docs.oracle.com/en-us/iaas/Content/container-instances/home.htm), [OKE](https://docs.oracle.com/en-us/iaas/Content/ContEng/) |
+| Self-hosted | Node.js on virtual machines or physical servers | [Docker](https://docs.docker.com/guides/nodejs/) |
+
+On virtual machines such as Compute Engine, applications run directly on Node.js; containers are optional.
+[AWS App Runner](https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html)
+is also an option for existing App Runner customers only.
+
 The adapters have no database or driver dependency; applications supply their own database clients.
-Applications that need database access are expected to use Kagiroi as their database client.
+Applications that need database access are expected to use [Kagiroi](https://github.com/quwac/kagiroi)
+as their database client.
 The current HTTP model uses buffered text bodies.
 Binary or streaming bodies, automatic request binding, OpenAPI generation, client generation,
 and a JVM server adapter are not part of this repository.
