@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "workspaces": {
+    ".": {
+      "project": ["scripts/**/*.{js,mjs,cjs}"],
+    },
+    "examples/hello-workers": {
+      "project": ["scripts/**/*.{js,mjs,cjs}"],
+    },
+  },
+  "ignoreUnresolved": ["^\\./gradlew$"],
+}

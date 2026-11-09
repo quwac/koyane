@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "koyane-hello-js",
+  "main": "worker.js.mjs",
+  "compatibility_date": "2026-10-15",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "koyane-hello",
+      "migrations_dir": "migrations",
+    },
+  ],
+}

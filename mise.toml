@@ -1,0 +1,157 @@
+[tools]
+rumdl = "0.3.2"
+java = "temurin-17.0.20+101"
+bun = "1.4.3"
+node = "22.23.4"
+hk = "2.6.0"
+pkl = "0.32.1"
+lychee = "0.24.2"
+gh = "2.102.0"
+"github:github/gh-actions-lock" = { version = "0.2.0", bin = "gh-actions-lock" }
+"github:jdx/jactionlint" = "2.2.0"
+zizmor = "1.31.1"
+betterleaks = "1.9.0"
+
+[settings]
+lockfile = true
+minimum_release_age = "3d"
+
+[tool_config]
+locked = true
+
+[tasks.setup]
+description = "Install frozen dependencies and register the repository's Git hooks"
+run = [
+    { task = "deps" },
+    "hk install --mise",
+]
+
+[tasks.deps]
+description = "Install locked tooling and Workers dependencies with Bun"
+run = [
+    "bun install --frozen-lockfile",
+    "bun install --frozen-lockfile --cwd examples/hello-workers",
+]
+
+[tasks."db:migrate:local"]
+description = "Apply the Workers example migrations to the local D1 database"
+depends = ["deps"]
+dir = "examples/hello-workers"
+run = "CI=true node node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --local --config wrangler.wasm.jsonc"
+
+[tasks."db:migrate:remote"]
+description = "Apply the Workers example migrations to the remote D1 database"
+depends = ["deps"]
+dir = "examples/hello-workers"
+raw = true
+run = "node node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --remote --config wrangler.wasm.jsonc"
+
+[tasks.build]
+description = "Build Kotlin/Wasm and prepare the Workers modules"
+run = { task = "build:wasm" }
+
+[tasks."build:wasm"]
+description = "Build Kotlin/Wasm and prepare the Workers modules"
+run = [
+    "./gradlew :examples:hello-workers:wasmJsProductionExecutableCompileSync",
+    "bun examples/hello-workers/scripts/prepare-workers-wasm.mjs",
+]
+
+[tasks."build:js"]
+description = "Build Kotlin/JS and prepare the Workers modules"
+run = [
+    "./gradlew :examples:hello-workers:jsProductionExecutableCompileSync",
+    "bun examples/hello-workers/scripts/prepare-workers-js.mjs",
+]
+
+[tasks."test:kotlin"]
+description = "Run Kotlin tests on all configured targets"
+run = "./gradlew allTests"
+
+[tasks."test:compile"]
+description = "Check positive and negative Kotlin/Wasm compiler fixtures"
+run = "bun scripts/test-compile.mjs"
+
+[tasks."test:workers"]
+description = "Run the Kotlin/Wasm Workers integration tests by default"
+run = { task = "test:workers:wasm" }
+
+[tasks."test:workers:wasm"]
+description = "Run Kotlin/Wasm integration tests against local workerd"
+depends = ["build:wasm", "deps"]
+run = "bun examples/hello-workers/scripts/test-workers.mjs wasm"
+
+[tasks."test:workers:js"]
+description = "Run Kotlin/JS integration tests against local workerd"
+depends = ["build:js", "deps"]
+run = "bun examples/hello-workers/scripts/test-workers.mjs js"
+
+[tasks.test]
+description = "Run all local Kotlin, compiler, and Workers tests in order"
+run = [
+    { task = "test:kotlin" },
+    { task = "test:compile" },
+    { task = "test:workers:wasm" },
+    { task = "test:workers:js" },
+]
+
+[tasks.dev]
+description = "Run the Workers example locally"
+depends = ["build", "db:migrate:local"]
+dir = "examples/hello-workers"
+run = "node node_modules/wrangler/bin/wrangler.js dev --config wrangler.wasm.jsonc"
+
+[tasks."dev:wasm"]
+description = "Run the Kotlin/Wasm Workers example locally"
+depends = ["build:wasm", "db:migrate:local"]
+dir = "examples/hello-workers"
+run = "node node_modules/wrangler/bin/wrangler.js dev --config wrangler.wasm.jsonc"
+
+[tasks."dev:js"]
+description = "Run the Kotlin/JS Workers example locally"
+depends = ["build:js", "db:migrate:local"]
+dir = "examples/hello-workers"
+run = "node node_modules/wrangler/bin/wrangler.js dev --config wrangler.js.jsonc"
+
+[tasks.deploy]
+description = "Deploy the Workers example"
+depends = ["build", "deps"]
+dir = "examples/hello-workers"
+raw = true
+run = "node node_modules/wrangler/bin/wrangler.js deploy --config wrangler.wasm.jsonc"
+
+[tasks."deploy:wasm"]
+description = "Deploy the Kotlin/Wasm Workers example"
+depends = ["build:wasm", "deps"]
+dir = "examples/hello-workers"
+raw = true
+run = "node node_modules/wrangler/bin/wrangler.js deploy --config wrangler.wasm.jsonc"
+
+[tasks."deploy:js"]
+description = "Deploy the Kotlin/JS Workers example"
+depends = ["build:js", "deps"]
+dir = "examples/hello-workers"
+raw = true
+run = "node node_modules/wrangler/bin/wrangler.js deploy --config wrangler.js.jsonc"
+
+[tasks."deploy:dry-run"]
+description = "Build the Kotlin/Wasm deployment bundle by default"
+run = { task = "deploy:dry-run:wasm" }
+
+[tasks."deploy:dry-run:wasm"]
+description = "Build the Kotlin/Wasm deployment bundle without uploading"
+depends = ["build:wasm", "deps"]
+dir = "examples/hello-workers"
+run = "node node_modules/wrangler/bin/wrangler.js deploy --config wrangler.wasm.jsonc --dry-run --outdir build/deploy-wasm"
+
+[tasks."deploy:dry-run:js"]
+description = "Build the Kotlin/JS deployment bundle without uploading"
+depends = ["build:js", "deps"]
+dir = "examples/hello-workers"
+run = "node node_modules/wrangler/bin/wrangler.js deploy --config wrangler.js.jsonc --dry-run --outdir build/deploy-js"
+
+[tasks."workers:login"]
+description = "Authenticate Wrangler with Cloudflare"
+depends = ["deps"]
+dir = "examples/hello-workers"
+run = "node node_modules/wrangler/bin/wrangler.js login"

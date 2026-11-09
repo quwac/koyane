@@ -1,0 +1,20 @@
+{
+  "name": "koyane-tooling",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "benchmark:workers": "bun examples/hello-workers/scripts/benchmark-workers.mjs",
+    "knip": "knip-bun",
+    "oxfmt": "oxfmt",
+    "oxlint": "oxlint"
+  },
+  "devDependencies": {
+    "knip": "6.43.0",
+    "oxfmt": "0.75.0",
+    "oxlint": "1.90.0"
+  },
+  "overrides": {
+    "katex": "0.18.2"
+  },
+  "packageManager": "bun@1.4.3"
+}
