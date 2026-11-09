@@ -4,7 +4,8 @@ This example builds the same Koyane application for Kotlin/JS and Kotlin/Wasm.
 It includes named routes, typed inputs, JSON, CORS, Bearer authentication, and D1 CRUD through Kagiroi.
 
 The application is in [Application.kt](src/commonMain/kotlin/dev/quwac/koyane/example/Application.kt).
-Its `main` function calls `defineD1Worker`, so the application setup remains in `commonMain`.
+Each target's `main` function calls `defineWorker<ExampleEnvironment>` and constructs the D1 driver.
+Routes and repositories remain in `commonMain`.
 
 Run commands from the repository root.
 
@@ -55,8 +56,10 @@ Every `receive` and `respond` call supplies an explicit serializer.
 
 ## D1 and Kagiroi
 
-`koyane-workers-d1` reads the `DB` Worker binding and creates a Kagiroi `D1Database`.
+The JavaScript entry point passes the full Worker environment to `koyane-workers`.
+The example declares its `DB` binding in each target's `ExampleEnvironment` and creates a Kagiroi `D1Database`.
 The example receives it as `SqlDatabase` and keeps repository code in common Kotlin.
+Database selection and driver construction belong to the example; `koyane-workers` has no database dependency.
 Kagiroi is a published dependency; its source modules are not part of this repository.
 
 The [`migrations`](migrations) directory contains the local D1 schema.

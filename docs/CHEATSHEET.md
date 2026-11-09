@@ -18,7 +18,7 @@ Add the optional modules used by your application explicitly.
 | `koyane-kotlinx-datetime` | `dev.quwac.koyane.http` |
 | `koyane-testing` | `dev.quwac.koyane.testing` |
 | `koyane-workers` | `dev.quwac.koyane.workers` (target source set) |
-| `koyane-workers-d1` | `dev.quwac.koyane.workers.d1` |
+| `koyane-node` | `dev.quwac.koyane.node` |
 
 ## Application and routing
 
@@ -471,19 +471,26 @@ and `request(HttpMethod, url)`. Each accepts headers, a text body, and a request
 
 `koyane-workers` supplies target-specific `defineWorker` and `WorkersAdapter` APIs for Fetch hosts.
 Keep host environment types in the target source set.
-`koyane-workers-d1` supplies `defineD1Worker` in `commonMain`:
+Declare a typed environment and pass application dependencies explicitly.
+This example works in `jsMain` and `wasmJsMain`:
 
 ```kotlin
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 import dev.quwac.koyane.core.koyane
 import dev.quwac.koyane.http.Http
-import dev.quwac.koyane.workers.d1.defineD1Worker
+import dev.quwac.koyane.workers.defineWorker
+import kotlin.js.JsAny
+
+external interface WorkerEnvironment : JsAny {
+    val greeting: String
+}
 
 fun main() {
-    defineD1Worker { database ->
-        // Pass database to repositories used by the handlers.
+    defineWorker<WorkerEnvironment> { environment ->
         koyane {
             install(Http) {
-                get("/hello") { text("hello") }
+                get("/hello") { text(environment.greeting) }
             }
         }
     }
@@ -491,4 +498,33 @@ fun main() {
 ```
 
 The adapter initializes the application from the first request environment and reuses it within the Worker isolate.
+The JavaScript Fetch entry point passes the full environment as `fetchKoyane(request, env)`.
+The adapter does not depend on a database or driver.
+Construct any database client supported by the target runtime in the application factory
+and pass it to common application code.
 See the [Workers example](../examples/hello-workers/README.md) for D1 queries, migrations, packaging, and deployment.
+
+## Node.js HTTP adapter
+
+`koyane-node` supports Kotlin/JS and Kotlin/Wasm with the same common API:
+
+```kotlin
+import dev.quwac.koyane.core.Application
+import dev.quwac.koyane.node.NodeServer
+import dev.quwac.koyane.node.listen
+
+suspend fun startServer(application: Application): NodeServer =
+    application.listen(host = "127.0.0.1", port = 3000)
+```
+
+`listen` requires an installed `Http` plugin and returns after the socket is listening.
+`server.port` contains the bound port; `port = 0` chooses an available port.
+`close` stops accepting connections and waits for active HTTP requests to finish.
+The application instance handles concurrent requests, so application-owned mutable state must be safe for concurrent use.
+The adapter buffers incoming UTF-8 text, joins repeated request headers, and omits HEAD response bodies.
+Unhandled failures produce a generic 500 response; install `ErrorHandling` for application-defined error responses.
+The adapter does not implement streaming, binary bodies, WebSockets, or AWS event payloads.
+
+AWS Lambda Web Functions use the host and port from `AWS_LAMBDA_HTTP_ENDPOINT`.
+Read it at the application boundary as shown in the
+[Lambda Web Functions example](../examples/hello-lambda-web/README.md).

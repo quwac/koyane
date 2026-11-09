@@ -100,7 +100,7 @@ Every optional feature is a module and is installed explicitly.
 | `koyane-kotlinx-datetime` | Input extensions | `kotlinx-datetime` extraction |
 | `koyane-testing` | `testApplication` | In-memory application tests |
 | `koyane-workers` | `defineWorker` | Cloudflare Workers Fetch adapter |
-| `koyane-workers-d1` | `defineD1Worker` | D1 binding with Kagiroi |
+| `koyane-node` | `Application.listen` | Node.js HTTP server, including AWS Lambda Web Functions |
 
 For JSON, add the Content Negotiation and Kotlin serialization modules, then supply serializers at the call site.
 
@@ -151,16 +151,45 @@ class HelloTest {
 ## Cloudflare Workers
 
 `koyane-workers` adapts Fetch requests and responses at the target boundary.
-`koyane-workers-d1` creates a Kagiroi `D1Database` from the Worker binding, so application setup can stay in `commonMain`.
+`defineWorker<Environment>` receives the host environment declared in the target source set.
+The adapter has no database or driver dependency.
+Applications choose their database and construct its client or driver at that boundary,
+then pass dependencies to application code in `commonMain`.
+Applications without a database use the same adapter.
 
 The [Workers example](examples/hello-workers/README.md) includes Kotlin/JS and Kotlin/Wasm builds,
 local D1 migrations, CORS, Bearer authentication, JSON, and typed D1 CRUD.
+
+## Node.js and AWS Lambda Web Functions
+
+`koyane-node` serves the same application through Node.js HTTP on Kotlin/JS and Kotlin/Wasm.
+It provides a buffered UTF-8 text adapter with concurrent request handling and explicit server shutdown.
+It has no AWS SDK or database dependency.
+
+```kotlin
+import dev.quwac.koyane.core.koyane
+import dev.quwac.koyane.http.Http
+import dev.quwac.koyane.node.listen
+
+suspend fun main() {
+    val application = koyane {
+        install(Http) {
+            get("/hello/:name") { text("Hello, ${param.string("name")}!") }
+        }
+    }
+    application.listen(host = "127.0.0.1", port = 3000)
+}
+```
+
+The [Lambda Web Functions example](examples/hello-lambda-web/README.md) reads the AWS-provided listen address
+and packages either target for the Node.js 24 runtime.
 
 ## Scope
 
 The current build targets Kotlin/JS and Kotlin/Wasm.
 Core and HTTP are independent of Fetch and host bindings.
 `koyane-workers` provides the Cloudflare Workers adapter.
+`koyane-node` provides the Node.js HTTP adapter.
 The current HTTP model uses buffered text bodies.
 Binary or streaming bodies, automatic request binding, OpenAPI generation, client generation,
 and a JVM server adapter are not part of this repository.

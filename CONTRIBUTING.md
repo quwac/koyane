@@ -4,6 +4,7 @@ Run these commands from the repository root.
 
 The [README](README.md) covers the framework API.
 The [Workers example](examples/hello-workers/README.md) covers local execution and deployment.
+The [Lambda Web Functions example](examples/hello-lambda-web/README.md) covers Node.js execution and AWS packaging.
 
 ## Set up
 
@@ -21,7 +22,7 @@ mise run setup
 | Eclipse Temurin 17 | Gradle, Kotlin compiler, and detekt |
 | Bun | Repository scripts and dependency installation |
 | rumdl | Markdown linting and formatting |
-| Node.js | Wrangler |
+| Node.js | Wrangler and Node HTTP adapter integration tests |
 | hk | Formatting, linting, links, workflow checks, and pre-commit hooks |
 | Gradle wrapper | Kotlin builds and tests |
 
@@ -39,10 +40,11 @@ mise run test
 | Command | Checks |
 | --- | --- |
 | `hk check --all` | Kotlin and JavaScript formatting/linting, Markdown linting and links, dependency use, secrets, and workflow files |
-| `mise run test` | Kotlin tests, Kotlin/Wasm compiler fixtures, and local workerd integration tests for both targets |
+| `mise run test` | Kotlin tests, compiler fixtures, and Workers and Node HTTP integration tests for both targets |
 | `mise run test:compile` | Compiler fixtures only |
 | `mise run test:workers:wasm` | Kotlin/Wasm Worker integration test |
 | `mise run test:workers:js` | Kotlin/JS Worker integration test |
+| `mise run test:node` | Kotlin/JS and Kotlin/Wasm Node HTTP integration tests |
 | `mise run deploy:dry-run:wasm` | Kotlin/Wasm Worker bundle without upload |
 | `mise run deploy:dry-run:js` | Kotlin/JS Worker bundle without upload |
 

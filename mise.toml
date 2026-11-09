@@ -87,12 +87,36 @@ depends = ["build:js", "deps"]
 run = "bun examples/hello-workers/scripts/test-workers.mjs js"
 
 [tasks.test]
-description = "Run all local Kotlin, compiler, and Workers tests in order"
+description = "Run all local Kotlin, compiler, and HTTP adapter tests in order"
 run = [
     { task = "test:kotlin" },
     { task = "test:compile" },
     { task = "test:workers:wasm" },
     { task = "test:workers:js" },
+    { task = "test:node" },
+]
+
+[tasks."build:lambda-web:js"]
+description = "Build the Kotlin/JS Lambda Web Functions package"
+run = [
+    "./gradlew :examples:hello-lambda-web:jsProductionExecutableCompileSync",
+    "bun examples/hello-lambda-web/scripts/prepare-node.mjs js",
+]
+
+[tasks."build:lambda-web:wasm"]
+description = "Build the Kotlin/Wasm Lambda Web Functions package"
+run = [
+    "./gradlew :examples:hello-lambda-web:wasmJsProductionExecutableCompileSync",
+    "bun examples/hello-lambda-web/scripts/prepare-node.mjs wasm",
+]
+
+[tasks."test:node"]
+description = "Run both Node HTTP adapter integration tests"
+run = [
+    { task = "build:lambda-web:js" },
+    "node examples/hello-lambda-web/scripts/test-node.mjs js",
+    { task = "build:lambda-web:wasm" },
+    "node examples/hello-lambda-web/scripts/test-node.mjs wasm",
 ]
 
 [tasks.dev]

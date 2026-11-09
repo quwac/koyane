@@ -26,8 +26,9 @@ include(
     ":koyane-logging",
     ":koyane-testing",
     ":koyane-workers",
-    ":koyane-workers-d1",
+    ":koyane-node",
     ":examples:hello-workers",
+    ":examples:hello-lambda-web",
 )
 
 if (providers.gradleProperty("compileFixture").isPresent) {

@@ -21,6 +21,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation("dev.quwac.kagiroi:kagiroi-sql:$kagiroiVersion")
+            implementation("dev.quwac.kagiroi:kagiroi-d1-driver:$kagiroiVersion")
             implementation(project(":koyane-bearer-authentication"))
             implementation(project(":koyane-content-negotiation"))
             implementation(project(":koyane-cors"))
@@ -28,7 +29,7 @@ kotlin {
             implementation(project(":koyane-http"))
             implementation(project(":koyane-kotlinx-serialization"))
             implementation(project(":koyane-logging"))
-            implementation(project(":koyane-workers-d1"))
+            implementation(project(":koyane-workers"))
         }
     }
 }
