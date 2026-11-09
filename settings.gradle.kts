@@ -15,6 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "koyane"
 include(
+    ":koyane-bom",
     ":koyane-core",
     ":koyane-http",
     ":koyane-content-negotiation",

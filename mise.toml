@@ -87,14 +87,19 @@ depends = ["build:js", "deps"]
 run = "bun examples/hello-workers/scripts/test-workers.mjs js"
 
 [tasks.test]
-description = "Run all local Kotlin, compiler, and HTTP adapter tests in order"
+description = "Run all local Kotlin, compiler, publication, and HTTP adapter tests in order"
 run = [
     { task = "test:kotlin" },
     { task = "test:compile" },
+    { task = "test:bom" },
     { task = "test:workers:wasm" },
     { task = "test:workers:js" },
     { task = "test:node" },
 ]
+
+[tasks."test:bom"]
+description = "Publish to an isolated Maven repository and compile JS/Wasm BOM consumers"
+run = "bun scripts/test-bom.mjs"
 
 [tasks."build:lambda-web:js"]
 description = "Build the Kotlin/JS Lambda Web Functions package"

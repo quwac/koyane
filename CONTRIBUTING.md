@@ -40,8 +40,9 @@ mise run test
 | Command | Checks |
 | --- | --- |
 | `hk check --all` | Kotlin and JavaScript formatting/linting, Markdown linting and links, dependency use, secrets, and workflow files |
-| `mise run test` | Kotlin tests, compiler fixtures, and Workers and Node HTTP integration tests for both targets |
+| `mise run test` | Kotlin tests, compiler fixtures, BOM consumption, and Workers and Node HTTP integration tests |
 | `mise run test:compile` | Compiler fixtures only |
+| `mise run test:bom` | Isolated Maven publication and versionless Kotlin/JS and Kotlin/Wasm consumers |
 | `mise run test:workers:wasm` | Kotlin/Wasm Worker integration test |
 | `mise run test:workers:js` | Kotlin/JS Worker integration test |
 | `mise run test:node` | Kotlin/JS and Kotlin/Wasm Node HTTP integration tests |
@@ -67,6 +68,28 @@ Set the Gradle JVM to the JDK reported by `mise where java`.
 Gradle uses strict dependency verification.
 IDE import downloads source artifacts as well as build artifacts, so source checksums must be present in `gradle/verification-metadata.xml`.
 After changing a Gradle dependency, reload the project and fix every reported verification entry before committing.
+
+## Maven publications
+
+The `koyane-bom` Java platform manages the common version of every public `koyane-*` library module.
+Library modules publish their Kotlin Multiplatform, JavaScript, and Wasm artifacts with Gradle's `maven-publish` plugin.
+Examples and compiler fixtures are not published.
+
+Publish the current snapshot to your local Maven repository:
+
+```sh
+mise exec -- ./gradlew publishToMavenLocal
+```
+
+The coordinates are `dev.koyane:<module>:0.0.1-SNAPSHOT`.
+Consumers import `platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT")` and omit versions from module dependencies.
+See the [dependency examples](README.md#dependencies) for Workers and Node.js.
+
+`mise run test:bom` publishes to an isolated repository under `build/reports/bom-tests`.
+It checks BOM coverage and POM packaging, compiles versionless JS/Wasm consumers,
+and verifies that importing the BOM does not pull optional modules into a minimal HTTP application.
+External dependencies retain strict verification in the consumer builds.
+No remote publishing repository, credentials, or release workflow is configured.
 
 ## Dependency updates
 

@@ -38,15 +38,59 @@ The API is experimental.
 - [Workers example](examples/hello-workers/README.md)
 - [Contributing](CONTRIBUTING.md)
 
-## Application
+## Dependencies
 
-Use the source modules in this repository from a Gradle multi-project build.
+`dev.koyane:koyane-bom` aligns the versions of all Koyane library modules.
+Import the BOM and add the modules used by your application without individual versions.
+The BOM does not add libraries or install plugins automatically.
+
+These snapshot coordinates require [local Maven publication](CONTRIBUTING.md#maven-publications).
+This build does not configure a remote Maven repository for publication.
+The snippets below belong in a Kotlin Multiplatform build targeting `js`, `wasmJs`, or both.
+
+### Cloudflare Workers dependencies
 
 ```kotlin
-commonMain.dependencies {
-    implementation(project(":koyane-http"))
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
+            implementation("dev.koyane:koyane-workers")
+            // implementation("dev.koyane:koyane-logging")
+        }
+    }
 }
 ```
+
+### Node.js and Lambda Web Functions dependencies
+
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
+            implementation("dev.koyane:koyane-node")
+            // implementation("dev.koyane:koyane-logging")
+        }
+    }
+}
+```
+
+Both adapters expose HTTP and Core transitively.
+For a runtime-independent library, use `dev.koyane:koyane-http` with the same BOM.
+Source-based multi-project builds can use `implementation(project(":koyane-http"))` directly.
+
+## Application
 
 Install HTTP explicitly and return an `HttpResponse` from every handler.
 
