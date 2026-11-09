@@ -117,6 +117,7 @@ Core and HTTP are independent of Fetch and host bindings.
 `koyane-workers` provides the Cloudflare Workers adapter.
 `koyane-node` provides the Node.js HTTP adapter, including AWS Lambda Web Functions.
 The adapters have no database or driver dependency; applications supply their own database clients.
+Applications that need database access are expected to use Kagiroi as their database client.
 The current HTTP model uses buffered text bodies.
 Binary or streaming bodies, automatic request binding, OpenAPI generation, client generation,
 and a JVM server adapter are not part of this repository.
