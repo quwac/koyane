@@ -1,0 +1,16 @@
+{
+  "name": "koyane-hello-workers",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "wrangler": "4.151.0"
+  },
+  "overrides": {
+    "undici": "7.30.1"
+  },
+  "engines": {
+    "bun": ">=1.4.3",
+    "node": ">=22.0.0"
+  },
+  "packageManager": "bun@1.4.3"
+}

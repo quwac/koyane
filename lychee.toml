@@ -1,0 +1,8 @@
+no_progress = true
+timeout = 20
+max_retries = 2
+
+# The private repository's Actions page and badge require GitHub browser authentication.
+exclude = [
+    '^https://github\.com/quwac/koyane/actions/workflows/ci\.yml(?:/badge\.svg)?$',
+]

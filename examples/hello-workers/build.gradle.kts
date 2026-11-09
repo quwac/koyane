@@ -1,0 +1,34 @@
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+
+val kagiroiVersion = providers.gradleProperty("kagiroiVersion").get()
+
+plugins {
+    kotlin("multiplatform")
+    kotlin("plugin.serialization")
+}
+
+kotlin {
+    js {
+        nodejs()
+        useEsModules()
+        binaries.executable()
+    }
+    wasmJs {
+        nodejs()
+        binaries.executable()
+        generateTypeScriptDefinitions()
+    }
+    sourceSets {
+        commonMain.dependencies {
+            implementation("dev.quwac.kagiroi:kagiroi-sql:$kagiroiVersion")
+            implementation(project(":koyane-bearer-authentication"))
+            implementation(project(":koyane-content-negotiation"))
+            implementation(project(":koyane-cors"))
+            implementation(project(":koyane-error-handling"))
+            implementation(project(":koyane-http"))
+            implementation(project(":koyane-kotlinx-serialization"))
+            implementation(project(":koyane-logging"))
+            implementation(project(":koyane-workers-d1"))
+        }
+    }
+}
