@@ -12,4 +12,4 @@ tables = false
 siblings-only = false
 
 [MD033]
-allowed-elements = ["a", "h1", "img", "p"]
+allowed-elements = ["a", "h1", "img", "p", "picture", "source"]

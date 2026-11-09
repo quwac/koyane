@@ -13,7 +13,7 @@ kotlin {
     }
     sourceSets {
         commonMain.dependencies {
-            api(project(":koyane-http"))
+            api(project(":koyane-fetch"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

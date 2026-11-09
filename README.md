@@ -29,15 +29,65 @@
 </p>
 
 Koyane (こやね, pronounced "koh-yah-neh") is a Kotlin framework with a typed plugin API.
-Applications are written in common Kotlin and built for Kotlin/JS or Kotlin/Wasm on Cloudflare Workers or Node.js.
+Applications use common Kotlin, with Kotlin/JS and Kotlin/Wasm adapters for Fetch hosts, Node.js servers, and HTTP functions.
 Core and HTTP are runtime-independent; adapters connect applications to host runtimes.
 
 The API is experimental.
 
 - [Cheat sheet](docs/CHEATSHEET.md)
-- [Workers example](examples/hello-workers/README.md)
-- [Lambda Web Functions example](examples/hello-lambda-web/README.md)
 - [Contributing](CONTRIBUTING.md)
+
+## Supported services
+
+All adapters target Kotlin/JS and Kotlin/Wasm.
+Choose your hosting service, then add the module listed below.
+Application code uses the same runtime-independent Core and HTTP APIs on every host.
+
+### Functions and edge services
+
+| Service | Runtime used by Koyane | Module | Example |
+| --- | --- | --- | --- |
+| <img src="docs/assets/services/cloudflare-workers.svg" width="20" height="20" alt=""> [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Workers runtime | `koyane-workers` | [Workers](examples/hello-workers/README.md) |
+| <img src="docs/assets/services/aws-lambda.png" width="20" height="20" alt=""> [AWS Lambda Event Functions](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html) | Node.js | `koyane-lambda` | [Lambda HTTP events](examples/hello-lambda/README.md) |
+| <img src="docs/assets/services/aws-lambda.png" width="20" height="20" alt=""> [AWS Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html) | Node.js | `koyane-node` | [Lambda HTTP server](examples/hello-lambda-web/README.md) |
+| <img src="docs/assets/services/google-cloud-functions.png" width="20" height="20" alt=""> [Google Cloud Run functions](https://docs.cloud.google.com/run/docs/write-functions) | Node.js | `koyane-node` | [Cloud Run functions](examples/hello-cloud-run-functions/README.md) |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/services/vercel-dark.svg"><img src="docs/assets/services/vercel.svg" width="20" height="20" alt=""></picture> [Vercel Functions](https://vercel.com/docs/functions/runtimes/node-js) | Node.js | `koyane-fetch` | [Vercel](examples/hello-fetch-functions/README.md#vercel) |
+| <img src="docs/assets/services/supabase.svg" width="20" height="20" alt=""> [Supabase Edge Functions](https://supabase.com/docs/guides/functions) | Supabase Edge Runtime (Deno) | `koyane-fetch` | [Supabase](examples/hello-fetch-functions/README.md#supabase) |
+
+The runtime column identifies the runtime used by this implementation; services may offer other runtimes.
+Kotlin/Wasm runs through a JavaScript entry point within that runtime.
+Lambda Event Functions support API Gateway HTTP API and Function URL payload 2.0.
+Cloud Run functions use Google's Node.js Functions Framework.
+Compatibility is checked locally; deployment to these cloud services is not verified.
+
+### Virtual machines and container services
+
+The following hosts can run the Node.js HTTP server on either Kotlin target.
+On virtual machines such as Compute Engine, run directly on Node.js or use a container.
+Container services run the same application packaged as a container image.
+
+| Service | Runtime used by Koyane | Module | Deployment |
+| --- | --- | --- | --- |
+| <img src="docs/assets/services/aws-ec2.png" width="20" height="20" alt=""> [Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html) | Node.js | `koyane-node` | Directly or in a container |
+| <img src="docs/assets/services/google-compute-engine.png" width="20" height="20" alt=""> [Google Compute Engine](https://docs.cloud.google.com/compute/docs/overview) | Node.js | `koyane-node` | Directly or in a container |
+| <img src="docs/assets/services/azure-virtual-machines.png" width="20" height="20" alt=""> [Azure Virtual Machines](https://learn.microsoft.com/en-us/azure/virtual-machines/overview) | Node.js | `koyane-node` | Directly or in a container |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/services/oci-compute-dark.png"><img src="docs/assets/services/oci-compute.png" width="20" height="20" alt=""></picture> [OCI Compute](https://docs.oracle.com/en-us/iaas/Content/Compute/Concepts/computeoverview.htm) | Node.js | `koyane-node` | Directly or in a container |
+| <img src="docs/assets/services/self-hosted.svg" width="20" height="20" alt=""> Self-hosted virtual machines or physical servers | Node.js | `koyane-node` | Directly or in a container, such as [Docker](https://docs.docker.com/guides/nodejs/) |
+| <img src="docs/assets/services/aws-ecs.png" width="20" height="20" alt=""> [Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html), including Fargate and [Express Mode](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-overview.html) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/aws-eks.png" width="20" height="20" alt=""> [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-concepts.html) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/aws-elastic-beanstalk.png" width="20" height="20" alt=""> [AWS Elastic Beanstalk Docker](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_docker.html) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/aws-lightsail.png" width="20" height="20" alt=""> [Amazon Lightsail container services](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-container-services.html) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/google-cloud-run.png" width="20" height="20" alt=""> [Google Cloud Run](https://docs.cloud.google.com/run/docs/container-contract) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/google-kubernetes-engine.png" width="20" height="20" alt=""> [Google Kubernetes Engine (GKE)](https://docs.cloud.google.com/kubernetes-engine/docs/deploy-app-cluster) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/google-app-engine.png" width="20" height="20" alt=""> [Google App Engine flexible custom runtimes](https://docs.cloud.google.com/appengine/docs/flexible/custom-runtimes/build) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/azure-container-apps.png" width="20" height="20" alt=""> [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/ingress-how-to) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/azure-app-service.png" width="20" height="20" alt=""> [Azure App Service custom containers](https://learn.microsoft.com/azure/app-service/configure-custom-container) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/azure-kubernetes-service.png" width="20" height="20" alt=""> [Azure Kubernetes Service (AKS)](https://learn.microsoft.com/en-us/azure/aks/secure-aks) | Node.js | `koyane-node` | Container |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/services/oci-container-instances-dark.png"><img src="docs/assets/services/oci-container-instances.png" width="20" height="20" alt=""></picture> [OCI Container Instances](https://docs.oracle.com/en-us/iaas/Content/container-instances/home.htm) | Node.js | `koyane-node` | Container |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/services/oci-kubernetes-engine-dark.png"><img src="docs/assets/services/oci-kubernetes-engine.png" width="20" height="20" alt=""></picture> [Oracle Kubernetes Engine (OKE)](https://docs.oracle.com/en-us/iaas/Content/ContEng/) | Node.js | `koyane-node` | Container |
+| <img src="docs/assets/services/aws-app-runner.png" width="20" height="20" alt=""> [AWS App Runner](https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html) | Node.js | `koyane-node` | Container; existing App Runner customers only |
+
+These are hosting options for the Node.js server; service-specific deployment configurations are not included.
 
 ## Dependencies
 
@@ -47,9 +97,7 @@ The BOM does not add libraries or install plugins automatically.
 
 These snapshot coordinates require [local Maven publication](CONTRIBUTING.md#maven-publications).
 This build does not configure a remote Maven repository for publication.
-The snippets below belong in a Kotlin Multiplatform build targeting `js`, `wasmJs`, or both.
-
-### Cloudflare Workers dependencies
+The snippet below belongs in a Kotlin Multiplatform build targeting `js`, `wasmJs`, or both.
 
 ```kotlin
 repositories {
@@ -61,33 +109,14 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
-            implementation("dev.koyane:koyane-workers")
+            implementation("dev.koyane:koyane-workers") // Choose the module for your service above.
             // implementation("dev.koyane:koyane-logging")
         }
     }
 }
 ```
 
-### Node.js dependencies
-
-```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
-            implementation("dev.koyane:koyane-node")
-            // implementation("dev.koyane:koyane-logging")
-        }
-    }
-}
-```
-
-Both adapters expose HTTP and Core transitively.
+All adapters expose HTTP and Core transitively.
 For a runtime-independent library, use `dev.koyane:koyane-http` with the same BOM.
 Source-based multi-project builds can use `implementation(project(":koyane-http"))` directly.
 
@@ -112,22 +141,8 @@ See the [cheat sheet](docs/CHEATSHEET.md) for API examples and behavior.
 
 ## Scope
 
-The current build targets Kotlin/JS and Kotlin/Wasm.
 Core and HTTP are independent of Fetch and host bindings.
-`koyane-workers` provides the [Cloudflare Workers](https://developers.cloudflare.com/workers/) adapter.
-`koyane-node` provides a standard Node.js HTTP server. Hosting options include:
-
-| Provider | Run directly on Node.js | Run as a container |
-| --- | --- | --- |
-| AWS | [Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html), [Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html) | [Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html) (including Fargate and [Express Mode](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-overview.html)), [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-concepts.html), [Elastic Beanstalk Docker](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_docker.html), [Lightsail container services](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-container-services.html) |
-| Google Cloud | [Compute Engine](https://docs.cloud.google.com/compute/docs/overview) | [Cloud Run](https://docs.cloud.google.com/run/docs/container-contract), [GKE](https://docs.cloud.google.com/kubernetes-engine/docs/deploy-app-cluster), [App Engine flexible custom runtimes](https://docs.cloud.google.com/appengine/docs/flexible/custom-runtimes/build) |
-| Microsoft Azure | [Azure Virtual Machines](https://learn.microsoft.com/en-us/azure/virtual-machines/overview) | [Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/ingress-how-to), [App Service custom containers](https://learn.microsoft.com/azure/app-service/configure-custom-container), [AKS](https://learn.microsoft.com/en-us/azure/aks/secure-aks) |
-| Oracle Cloud | [OCI Compute](https://docs.oracle.com/en-us/iaas/Content/Compute/Concepts/computeoverview.htm) | [OCI Container Instances](https://docs.oracle.com/en-us/iaas/Content/container-instances/home.htm), [OKE](https://docs.oracle.com/en-us/iaas/Content/ContEng/) |
-| Self-hosted | Node.js on virtual machines or physical servers | [Docker](https://docs.docker.com/guides/nodejs/) |
-
-On virtual machines such as Compute Engine, applications run directly on Node.js; containers are optional.
-[AWS App Runner](https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html)
-is also an option for existing App Runner customers only.
+CloudEvents, SQS events, API Gateway payload 1.0, and ALB events are outside the HTTP adapters' scope.
 
 The adapters have no database or driver dependency; applications supply their own database clients.
 Applications that need database access are expected to use [Kagiroi](https://github.com/quwac/kagiroi)

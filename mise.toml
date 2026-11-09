@@ -95,6 +95,8 @@ run = [
     { task = "test:workers:wasm" },
     { task = "test:workers:js" },
     { task = "test:node" },
+    { task = "test:functions:node" },
+    { task = "test:functions:edge" },
 ]
 
 [tasks."test:bom"]
@@ -184,3 +186,39 @@ description = "Authenticate Wrangler with Cloudflare"
 depends = ["deps"]
 dir = "examples/hello-workers"
 run = "node node_modules/wrangler/bin/wrangler.js login"
+
+[tasks."build:functions:js"]
+description = "Build js HTTP function packages for Vercel, Supabase, Cloud Run, and Lambda"
+run = [
+    "./gradlew :examples:hello-fetch-functions:jsProductionExecutableCompileSync :examples:hello-cloud-run-functions:jsProductionExecutableCompileSync :examples:hello-lambda:jsProductionExecutableCompileSync",
+    "bun scripts/prepare-functions.mjs js",
+]
+
+[tasks."build:functions:wasm"]
+description = "Build wasm HTTP function packages for Vercel, Supabase, Cloud Run, and Lambda"
+run = [
+    "./gradlew :examples:hello-fetch-functions:wasmJsProductionExecutableCompileSync :examples:hello-cloud-run-functions:wasmJsProductionExecutableCompileSync :examples:hello-lambda:wasmJsProductionExecutableCompileSync",
+    "bun scripts/prepare-functions.mjs wasm",
+]
+
+[tasks."test:functions:node"]
+description = "Test JS/Wasm Fetch, Lambda events, and the official Functions Framework on Node.js"
+run = [
+    { task = "build:functions:js" },
+    { task = "build:functions:wasm" },
+    "node scripts/test-functions.mjs js vercel",
+    "node scripts/test-functions.mjs wasm vercel",
+    "node scripts/test-functions.mjs js lambda",
+    "node scripts/test-functions.mjs wasm lambda",
+    "node scripts/test-functions.mjs js cloud-run",
+    "node scripts/test-functions.mjs wasm cloud-run",
+]
+
+[tasks."test:functions:edge"]
+description = "Test JS/Wasm HTTP functions in Supabase Edge Runtime user workers (requires Docker)"
+run = [
+    { task = "build:functions:js" },
+    { task = "build:functions:wasm" },
+    "node scripts/test-functions.mjs js supabase",
+    "node scripts/test-functions.mjs wasm supabase",
+]

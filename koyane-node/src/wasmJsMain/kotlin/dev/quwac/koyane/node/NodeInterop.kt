@@ -2,6 +2,8 @@
 
 package dev.quwac.koyane.node
 
+import dev.quwac.koyane.core.Application
+import dev.quwac.koyane.http.Http
 import dev.quwac.koyane.http.HttpRequest
 import dev.quwac.koyane.http.HttpResponse
 import kotlin.coroutines.Continuation
@@ -18,15 +20,17 @@ import kotlin.js.Promise
 @JsModule("node:http")
 private external object NodeHttp {
     @Suppress("UnusedParameter") // Implemented by Node.js.
-    fun createServer(listener: (NativeRequest, NativeResponse) -> Unit): NativeServer
+    fun createServer(listener: (NodeRequest, NodeResponse) -> Unit): NativeServer
 }
 
-private external interface NativeRequest : JsAny {
+/** A native Node.js IncomingMessage, including Express requests. */
+external interface NodeRequest : JsAny {
     val method: String?
     val url: String?
 }
 
-private external interface NativeResponse : JsAny {
+/** A native Node.js ServerResponse, including Express responses. */
+external interface NodeResponse : JsAny {
     var statusCode: Int
     val destroyed: Boolean
     fun setHeader(name: String, value: String)
@@ -49,12 +53,22 @@ private external interface NativeServer : JsAny {
     fun close(callback: (NativeError?) -> Unit)
 }
 
+/** Handles a function invocation without opening a listening socket. */
+class NodeAdapter(application: Application) {
+    private val http = application[Http]
+
+    /** [body] is the host's original UTF-8 body, read before invoking the adapter. */
+    fun handle(request: NodeRequest, response: NodeResponse, body: String): Promise<JsAny?> = Promise { resolve, _ ->
+        handleRequest(request, response, http::handle, body) { resolve(null) }
+    }
+}
+
 internal actual suspend fun startNodeServer(
     host: String,
     port: Int,
     handler: suspend (HttpRequest) -> HttpResponse,
 ): NodeServerHandle {
-    val server = NodeHttp.createServer { request, response -> handleRequest(request, response, handler) }
+    val server = NodeHttp.createServer { request, response -> handleRequest(request, response, handler = handler) }
     return suspendCoroutine { continuation ->
         val onError: (NativeError) -> Unit = { error ->
             continuation.resumeWithException(IllegalStateException(error.message))
@@ -82,16 +96,18 @@ private class ListeningServer(private val server: NativeServer) : NodeServerHand
 }
 
 private fun handleRequest(
-    request: NativeRequest,
-    response: NativeResponse,
+    request: NodeRequest,
+    response: NodeResponse,
     handler: suspend (HttpRequest) -> HttpResponse,
+    body: String? = null,
+    complete: () -> Unit = {},
 ) {
     val operation: suspend () -> Unit = {
         val input = HttpRequest(
             method = request.method ?: "GET",
             url = request.url ?: "/",
             headers = requestHeaders(request),
-            body = readBody(request).awaitText(),
+            body = body ?: readBody(request).awaitText(),
         )
         val output = handler(input)
         if (!response.destroyed) {
@@ -108,11 +124,12 @@ private fun handleRequest(
                 println("Node HTTP request failed: $error")
                 sendFailure(response)
             }
+            complete()
         }
     })
 }
 
-private fun requestHeaders(request: NativeRequest): Map<String, String> {
+private fun requestHeaders(request: NodeRequest): Map<String, String> {
     val headers = linkedMapOf<String, String>()
     for (index in 0 until headerCount(request) step 2) {
         val name = rawHeader(request, index).lowercase()
@@ -134,13 +151,13 @@ private suspend fun Promise<JsString>.awaitText(): String = suspendCoroutine { c
 }
 
 @Suppress("UnusedParameter") // Parameters are referenced by the embedded JavaScript.
-private fun headerCount(request: NativeRequest): Int = js("request.rawHeaders.length")
+private fun headerCount(request: NodeRequest): Int = js("request.rawHeaders.length")
 
 @Suppress("UnusedParameter")
-private fun rawHeader(request: NativeRequest, index: Int): String = js("request.rawHeaders[index]")
+private fun rawHeader(request: NodeRequest, index: Int): String = js("request.rawHeaders[index]")
 
 @Suppress("UnusedParameter")
-private fun readBody(request: NativeRequest): Promise<JsString> = js(
+private fun readBody(request: NodeRequest): Promise<JsString> = js(
     """new Promise((resolve, reject) => {
         let body = '';
         request.setEncoding('utf8');
@@ -152,7 +169,7 @@ private fun readBody(request: NativeRequest): Promise<JsString> = js(
 )
 
 @Suppress("UnusedParameter")
-private fun sendFailure(response: NativeResponse): Unit = js(
+private fun sendFailure(response: NodeResponse): Unit = js(
     """{
         if (!response.destroyed) {
             if (response.headersSent) {

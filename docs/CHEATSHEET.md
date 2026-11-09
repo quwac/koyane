@@ -20,6 +20,8 @@ The `dev.koyane:koyane-bom` platform aligns versions; it does not add libraries 
 | `koyane-testing` | `dev.quwac.koyane.testing` |
 | `koyane-workers` | `dev.quwac.koyane.workers` (target source set) |
 | `koyane-node` | `dev.quwac.koyane.node` |
+| `koyane-fetch` | `dev.quwac.koyane.fetch` (target source set) |
+| `koyane-lambda` | `dev.quwac.koyane.lambda` (target source set) |
 
 ## Application and routing
 
@@ -529,3 +531,56 @@ The adapter does not implement streaming, binary bodies, WebSockets, or AWS even
 AWS Lambda Web Functions use the host and port from `AWS_LAMBDA_HTTP_ENDPOINT`.
 Read it at the application boundary as shown in the
 [Lambda Web Functions example](../examples/hello-lambda-web/README.md).
+
+## Fetch function adapter
+
+`koyane-fetch` exposes `FetchAdapter`, `FetchRequest`, `FetchResponse`, and `FetchHeaders`
+in `jsMain` and `wasmJsMain`. An adapter reuses an application and returns a native promise:
+
+```kotlin
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
+import dev.quwac.koyane.core.Application
+import dev.quwac.koyane.fetch.FetchAdapter
+import dev.quwac.koyane.fetch.FetchRequest
+import dev.quwac.koyane.fetch.FetchResponse
+import kotlin.js.Promise
+
+class FetchFunction(application: Application) {
+    private val adapter = FetchAdapter(application)
+    fun handle(request: FetchRequest): Promise<FetchResponse> = adapter.handle(request)
+}
+```
+
+The adapter buffers the request's text body, preserves its URL and headers,
+and omits bodies for HEAD and bodyless HTTP statuses.
+Unhandled failures reject the promise; install `ErrorHandling` to return an HTTP error response.
+`WorkersAdapter` and the `Worker*` native types are aliases for this Fetch API.
+See the [Vercel and Supabase example](../examples/hello-fetch-functions/README.md) for host entry points and Wasm packaging.
+
+## Node.js function adapter
+
+`NodeAdapter(application).handle(request, response, body)` accepts native `NodeRequest` and
+`NodeResponse` values and the original UTF-8 body as a `String`.
+These target-specific types are in `dev.quwac.koyane.node` on both JS and Wasm.
+The returned native promise resolves after ending the response.
+It requires an installed `Http` plugin, shares the server adapter's response/error behavior,
+and opens no listening socket.
+For Cloud Run functions, pass `request.rawBody?.toString("utf8") ?? ""` from the JavaScript boundary;
+`request.body` can already be parsed and its stream consumed.
+See the [Cloud Run functions example](../examples/hello-cloud-run-functions/README.md).
+
+## Lambda HTTP event adapter
+
+`LambdaAdapter(application).handle(event)` accepts a native `LambdaHttpEvent` and returns a
+`Promise<LambdaHttpResponse>` on JS and Wasm, in `dev.quwac.koyane.lambda`.
+An installed `Http` plugin is required.
+Only API Gateway HTTP API and Function URL payload 2.0 are supported.
+The adapter preserves `rawPath` and `rawQueryString`, reads UTF-8 text or Base64-encoded UTF-8 text,
+joins event cookies with `; `, and returns `statusCode`, `headers`, `cookies`, `body`, and `isBase64Encoded: false`.
+Response `Set-Cookie` values go into the separate cookies array without splitting on commas.
+HEAD responses have an empty body.
+The HTTP header model stores one string per name; use one Set-Cookie value per response header entry.
+Unsupported event formats, invalid Base64, and unhandled application failures reject the promise.
+Install `ErrorHandling` to produce application-defined HTTP error responses.
+See the [Lambda Event Functions example](../examples/hello-lambda/README.md).

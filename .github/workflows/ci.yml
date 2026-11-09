@@ -96,6 +96,8 @@ jobs:
       - run: mise run test:workers:wasm
       - run: mise run test:workers:js
       - run: mise run test:node
+      - run: mise run test:functions:node
+      - run: mise run test:functions:edge
       - run: mise run deploy:dry-run:wasm
       - run: mise run deploy:dry-run:js
 

@@ -19,6 +19,8 @@ dependencies {
         api(project(":koyane-testing"))
         api(project(":koyane-workers"))
         api(project(":koyane-node"))
+        api(project(":koyane-fetch"))
+        api(project(":koyane-lambda"))
     }
 }
 
