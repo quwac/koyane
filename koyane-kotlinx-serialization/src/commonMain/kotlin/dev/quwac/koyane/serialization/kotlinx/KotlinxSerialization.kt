@@ -38,10 +38,18 @@ fun ContentNegotiationConfiguration.json(format: Json = Json) {
     register(jsonContentType, KotlinxJsonConverter(format))
 }
 
+/**
+ * Decodes the JSON request using [serializer] and the format installed with [json].
+ * Requires Content Negotiation; unsupported Content-Type produces HTTP 415 and invalid JSON produces HTTP 400.
+ */
 fun <T : Any> HandlerScope.receive(serializer: KSerializer<T>): T = receiveContent { converter ->
     (converter as? KotlinxJsonConverter)?.let { KotlinxJsonCodec(serializer, it.format) }
 }
 
+/**
+ * Encodes [value] using [serializer] and the installed JSON format, negotiating the request's Accept header.
+ * Requires Content Negotiation; no acceptable JSON registration produces HTTP 406 and encoding failures propagate.
+ */
 fun <T : Any> HandlerScope.respond(
     value: T,
     serializer: KSerializer<T>,

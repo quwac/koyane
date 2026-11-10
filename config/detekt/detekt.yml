@@ -4,6 +4,10 @@ config:
 ktlint:
   active: true
   code_style: intellij_idea
+  Kdoc:
+    active: true
+  KdocWrapping:
+    active: true
 
 # Let ktlint own overlapping rules so automatic correction is available.
 empty-blocks:
@@ -13,6 +17,14 @@ empty-blocks:
 naming:
   MatchingDeclarationName:
     active: false
+
+comments:
+  UndocumentedPublicClass:
+    active: true
+  UndocumentedPublicFunction:
+    active: true
+  UndocumentedPublicProperty:
+    active: true
 
 style:
   MaxLineLength:

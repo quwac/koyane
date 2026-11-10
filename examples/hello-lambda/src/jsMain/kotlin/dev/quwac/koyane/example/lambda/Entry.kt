@@ -10,5 +10,6 @@ import kotlin.js.Promise
 
 private val adapter = LambdaAdapter(createApplication())
 
+/** The Lambda payload 2.0 entry point; invalid event formats reject the returned promise. */
 @JsExport
 fun handler(event: LambdaHttpEvent): Promise<LambdaHttpResponse> = adapter.handle(event)

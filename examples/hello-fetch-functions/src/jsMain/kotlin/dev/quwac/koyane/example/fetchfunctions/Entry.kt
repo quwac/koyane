@@ -10,5 +10,6 @@ import kotlin.js.Promise
 
 private val adapter = FetchAdapter(createApplication())
 
+/** The Fetch host entry point using the shared example application and buffered text bodies. */
 @JsExport
 fun fetch(request: FetchRequest): Promise<FetchResponse> = adapter.handle(request)

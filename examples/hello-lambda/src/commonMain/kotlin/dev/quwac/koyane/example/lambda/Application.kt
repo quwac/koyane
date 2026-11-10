@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 
 private const val RESPONSE_DELAY_MS = 10L
 
+/** Builds the Lambda HTTP payload example with its HTTP integration-test routes. */
 fun createApplication(): Application = koyane {
     install(ErrorHandling)
     install(Http) {
@@ -35,4 +36,5 @@ fun createApplication(): Application = koyane {
     }
 }
 
+/** Executable entry point; the host invokes the exported HTTP function for requests. */
 fun main() = Unit

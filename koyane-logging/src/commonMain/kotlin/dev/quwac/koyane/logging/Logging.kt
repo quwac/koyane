@@ -6,15 +6,19 @@ import dev.quwac.koyane.http.onError
 import dev.quwac.koyane.http.onRequest
 import dev.quwac.koyane.http.onResponseReady
 
+/** Selects the output function used by the installed [Logging] plugin. */
 class LoggingConfiguration {
+    /** Receives each log message synchronously; defaults to [println] and any sink failure propagates. */
     var sink: (String) -> Unit = ::println
 }
 
 /** An application-owned logger with an explicitly supplied output function. */
 class Logger internal constructor(private val sink: (String) -> Unit) {
+    /** Passes [message] unchanged to the configured sink; sink failures propagate to the caller. */
     fun log(message: String) = sink(message)
 }
 
+/** Logs request paths, final response statuses, and failures; query strings and fragments are omitted. */
 object Logging : Plugin<LoggingConfiguration, Logger> {
     override fun createConfiguration(): LoggingConfiguration = LoggingConfiguration()
     override fun install(configuration: LoggingConfiguration): Logger = Logger(configuration.sink)

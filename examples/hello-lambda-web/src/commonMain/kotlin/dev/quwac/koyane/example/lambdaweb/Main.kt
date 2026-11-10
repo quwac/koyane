@@ -2,6 +2,7 @@ package dev.quwac.koyane.example.lambdaweb
 
 import dev.quwac.koyane.node.listen
 
+/** Starts the example at AWS_LAMBDA_HTTP_ENDPOINT, or `127.0.0.1:3000` when the variable is absent. */
 suspend fun main() {
     val endpoint = lambdaHttpEndpoint() ?: "127.0.0.1:3000"
     val separator = endpoint.lastIndexOf(':')

@@ -13,34 +13,62 @@ import kotlin.js.Promise
 
 /** API Gateway HTTP API / Lambda Function URL payload format 2.0. */
 external interface LambdaHttpEvent : JsAny {
+    /** The native payload format version; [LambdaAdapter] requires `2.0`. */
     val version: String?
+
+    /** The absolute request path without the query string; required by [LambdaAdapter]. */
     val rawPath: String?
+
+    /** The original query string without `?`; absence is treated as empty. */
     val rawQueryString: String?
+
+    /** The native object of request header names and string values, when present. */
     val headers: JsAny?
+
+    /** The native array of cookie strings, joined into the request Cookie header when nonempty. */
     val cookies: JsAny?
+
+    /** The native text or Base64 request body; absence is treated as empty. */
     val body: String?
+
+    /** Whether [body] contains Base64; absent or false leaves the body as text. */
     val isBase64Encoded: Boolean?
+
+    /** The request context containing the HTTP method required for dispatch. */
     val requestContext: LambdaRequestContext?
 }
 
+/** The portion of the Lambda request context used to obtain HTTP request metadata. */
 external interface LambdaRequestContext : JsAny {
+    /** The native HTTP context, when supplied by the host. */
     val http: LambdaHttpContext?
 }
 
+/** The HTTP metadata used by the Lambda payload 2.0 adapter. */
 external interface LambdaHttpContext : JsAny {
+    /** The HTTP method required by [LambdaAdapter]. */
     val method: String?
 }
 
 /** Native Lambda HTTP payload 2.0 response, including the separate cookies array. */
 external interface LambdaHttpResponse : JsAny {
+    /** The final HTTP status code. */
     val statusCode: Int
+
+    /** The native response header object; Set-Cookie values are placed in [cookies] instead. */
     val headers: JsAny
+
+    /** The native array containing response Set-Cookie values. */
     val cookies: JsAny
+
+    /** The buffered response text; HEAD responses have an empty body. */
     val body: String
+
+    /** Whether the response body is Base64; this text adapter always returns false. */
     val isBase64Encoded: Boolean
 }
 
-/** Bridges HTTP payload 2.0 events to the installed HTTP plugin. */
+/** Bridges HTTP payload 2.0 events with buffered text bodies; construction requires HTTP in [application]. */
 class LambdaAdapter(private val application: Application) {
     init {
         application[Http]

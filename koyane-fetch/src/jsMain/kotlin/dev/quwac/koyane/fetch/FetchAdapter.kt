@@ -14,19 +14,31 @@ import kotlin.js.Promise
 
 /** A native Fetch API Response. Host APIs are confined to this adapter. */
 external interface FetchResponse {
+    /** The numeric status of the native Fetch response. */
     val status: Int
+
+    /** Reads and consumes the body as text; native body-read failures reject the promise. */
     fun text(): Promise<String>
 }
 
 /** The host's native Fetch Request. */
 external interface FetchRequest {
+    /** The native request method token. */
     val method: String
+
+    /** The native request URL passed to HTTP routing. */
     val url: String
+
+    /** The native request headers iterated by the adapter. */
     val headers: FetchHeaders
+
+    /** Reads and consumes the body as text; native body-read failures reject the promise. */
     fun text(): Promise<String>
 }
 
+/** The host Headers view used to enumerate request header values. */
 external interface FetchHeaders {
+    /** Invokes [callback] with each header value followed by its name, using native Headers iteration. */
     fun forEach(callback: (String, String) -> Unit)
 }
 
@@ -35,7 +47,9 @@ private external class Headers {
     fun set(name: String, value: String)
 }
 
+/** Bridges native Fetch requests and responses to an application with HTTP installed, buffering bodies as text. */
 class FetchAdapter(private val application: Application) {
+    /** Consumes [request] and resolves a native response; body-read, HTTP, and response-construction failures reject. */
     fun handle(request: FetchRequest): Promise<FetchResponse> = Promise { resolve, reject ->
         val operation: suspend () -> FetchResponse = {
             val headers = mutableMapOf<String, String>()

@@ -2,10 +2,20 @@ package dev.quwac.koyane.http
 
 private const val TOKEN_CHARACTERS = "!#$%&'*+-.^_`|~"
 
-/** A normalized HTTP media type. Parameter names are case insensitive. */
+/**
+ * A normalized HTTP media type. Type, subtype, and parameter names are lowercased; parameter values are preserved.
+ *
+ * @throws IllegalArgumentException if a type or parameter name is invalid, a type is a wildcard,
+ * or a parameter value contains a carriage return or newline.
+ */
 class ContentType(type: String, subtype: String, parameters: Map<String, String> = emptyMap()) {
+    /** The lowercase top-level media type, such as `application`. */
     val type: String = type.lowercase()
+
+    /** The lowercase media subtype, such as `json`. */
     val subtype: String = subtype.lowercase()
+
+    /** Media type parameters indexed by lowercase names, with values preserved. */
     val parameters: Map<String, String> = parameters.mapKeys { it.key.lowercase() }
 
     init {
@@ -17,6 +27,7 @@ class ContentType(type: String, subtype: String, parameters: Map<String, String>
         }
     }
 
+    /** Compares type and subtype with [other], ignoring all parameters. */
     fun matches(other: ContentType): Boolean = type == other.type && subtype == other.subtype
 
     override fun equals(other: Any?): Boolean =
@@ -36,7 +47,9 @@ class ContentType(type: String, subtype: String, parameters: Map<String, String>
         }
     }
 
+    /** Parses concrete media types from HTTP header values. */
     companion object {
+        /** Parses [value], including quoted parameters; returns null for malformed input or duplicate parameter names. */
         fun parse(value: String): ContentType? {
             val parts = splitParameters(value)
             return parts?.let(::parseContentType)

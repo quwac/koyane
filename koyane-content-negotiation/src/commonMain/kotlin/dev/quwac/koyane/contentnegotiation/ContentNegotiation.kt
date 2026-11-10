@@ -17,9 +17,12 @@ interface ContentConverter
 interface ContentCodec<T : Any> {
     /** Returns null when the body cannot be decoded as a valid value. */
     fun decode(body: String): T?
+
+    /** Encodes [value] as a text body; encoding failures propagate to the caller. */
     fun encode(value: T): String
 }
 
+/** Registers converters in response-preference order; each concrete media type may be registered once. */
 class ContentNegotiationConfiguration {
     private val registrations = mutableListOf<ContentRegistration>()
 
@@ -34,14 +37,20 @@ class ContentNegotiationConfiguration {
     internal fun build(): ContentNegotiationApplication = ContentNegotiationApplication(registrations.toList())
 }
 
+/** Installs explicit request decoding and Accept-based response encoding without depending on a serialization library. */
 object ContentNegotiation : Plugin<ContentNegotiationConfiguration, ContentNegotiationApplication> {
     override fun createConfiguration(): ContentNegotiationConfiguration = ContentNegotiationConfiguration()
     override fun install(configuration: ContentNegotiationConfiguration): ContentNegotiationApplication =
         configuration.build()
 }
 
+/** The immutable converter registrations belonging to one application's [ContentNegotiation] plugin. */
 class ContentNegotiationApplication internal constructor(private val registrations: List<ContentRegistration>) {
-    /** Selects from Content-Type, then decodes with the codec supplied for that converter. */
+    /**
+     * Selects a converter by request Content-Type, ignoring media type parameters, then decodes the buffered body.
+     * [codec] returns null for converters that cannot handle [T]. Missing, malformed, or unsupported Content-Type
+     * produces HTTP 415; a null decode result throws [InvalidHttpInput] for HTTP 400. Codec exceptions propagate.
+     */
     fun <T : Any> receive(request: HttpRequest, codec: (ContentConverter) -> ContentCodec<T>?): T {
         val contentType = request.header("Content-Type")?.let(ContentType::parse) ?: unsupportedContentType()
         val selected = registrations.firstNotNullOfOrNull { registration ->
@@ -50,7 +59,12 @@ class ContentNegotiationApplication internal constructor(private val registratio
         return selected.decode(request.body) ?: invalidContent()
     }
 
-    /** Selects from Accept, then encodes an ordinary HttpResponse with the selected Content-Type. */
+    /**
+     * Negotiates Accept against converters supported by [codec] and encodes [value] with the selected Content-Type.
+     * An absent Accept header selects the first supported registration. Quality, specificity, header order,
+     * then registration order decide between candidates; no acceptable format produces HTTP 406.
+     * Encoding failures propagate and [HttpResponse] validates the body against [status].
+     */
     fun <T : Any> respond(
         request: HttpRequest,
         value: T,
@@ -69,9 +83,11 @@ class ContentNegotiationApplication internal constructor(private val registratio
     }
 }
 
+/** Decodes this request through the installed [ContentNegotiation] plugin; see [ContentNegotiationApplication.receive]. */
 fun <T : Any> HandlerScope.receive(codec: (ContentConverter) -> ContentCodec<T>?): T =
     application[ContentNegotiation].receive(request, codec)
 
+/** Negotiates and encodes a response through installed [ContentNegotiation]; see [ContentNegotiationApplication.respond]. */
 fun <T : Any> HandlerScope.respond(
     value: T,
     status: HttpStatus = HttpStatus.OK,

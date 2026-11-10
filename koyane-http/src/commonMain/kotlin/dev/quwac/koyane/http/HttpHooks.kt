@@ -5,8 +5,14 @@ import dev.quwac.koyane.core.AttributeKey
 import dev.quwac.koyane.core.Attributes
 import dev.quwac.koyane.core.PluginScope
 
-/** One call, including framework responses and failures, owns one attribute store. */
+/**
+ * One call, including framework responses and failures, owns one attribute store.
+ *
+ * @property application The application handling this call.
+ * @property request The incoming HTTP message before routing or typed extraction.
+ */
 class HttpCall internal constructor(val application: Application, val request: HttpRequest) {
+    /** Per-call typed values shared by request hooks, the handler, and response or error hooks. */
     val attributes = Attributes()
 }
 

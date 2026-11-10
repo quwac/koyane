@@ -16,6 +16,13 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.uuid.Uuid
 
+/**
+ * A persisted Todo exposed by the HTTP example.
+ *
+ * @property id The Todo identifier serialized as a hex-and-dash UUID.
+ * @property title The Todo title.
+ * @property completed Whether the Todo has been completed.
+ */
 @Serializable
 data class Todo(
     @Serializable(with = UuidStringSerializer::class)
@@ -24,6 +31,12 @@ data class Todo(
     val completed: Boolean,
 )
 
+/**
+ * JSON input for creating a Todo.
+ *
+ * @property id The client-supplied hex-and-dash UUID.
+ * @property title The title, validated as nonblank by the route.
+ */
 @Serializable
 data class CreateTodoRequest(
     @Serializable(with = UuidStringSerializer::class)
@@ -31,6 +44,12 @@ data class CreateTodoRequest(
     val title: String,
 )
 
+/**
+ * JSON input for replacing a Todo's editable fields.
+ *
+ * @property title The replacement title, validated as nonblank by the route.
+ * @property completed The replacement completion state.
+ */
 @Serializable
 data class UpdateTodoRequest(val title: String, val completed: Boolean)
 
