@@ -66,6 +66,13 @@ Use `hk fix --all` for supported formatting fixes.
 It does not stage files.
 The pre-commit hook checks staged content and does not apply fixes.
 
+Detekt requires KDoc on public classes, interfaces, objects, functions, properties, and enum entries
+in library and example production sources.
+The `UndocumentedPublicClass`, `UndocumentedPublicFunction`, and `UndocumentedPublicProperty` rules
+fail `./gradlew detekt`, the hk Kotlin check, and CI when documentation is missing.
+Overridden functions and properties are exempt from these rules; test sources follow Detekt's default test exclusions.
+Document runtime validation, defaults, and failure behavior alongside the API they describe.
+
 `hk check --all --profile ci` also checks external Markdown links.
 Normal local link checks are offline.
 

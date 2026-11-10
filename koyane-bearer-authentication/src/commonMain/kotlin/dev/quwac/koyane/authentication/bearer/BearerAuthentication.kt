@@ -7,7 +7,9 @@ import dev.quwac.koyane.http.HttpCall
 import dev.quwac.koyane.http.HttpResponse
 import dev.quwac.koyane.http.HttpStatus
 
+/** Configures a Bearer challenge and a verifier producing [P]; installation requires a call to [verify]. */
 class BearerConfiguration<P : Any> {
+    /** Challenge realm, defaulting to `koyane`; installation rejects characters outside printable ASCII. */
     var realm: String = "koyane"
     private var verifier: (suspend (String) -> P?)? = null
 
@@ -73,6 +75,7 @@ fun <P : Any> authenticated(
 fun <P : Any> HandlerScope.principal(plugin: BearerAuthentication<P>): P =
     checkNotNull(principalOrNull(plugin)) { "No authenticated principal for this plugin" }
 
+/** Returns this call's verified principal, or null before authentication; [plugin] must be installed. */
 fun <P : Any> HandlerScope.principalOrNull(plugin: BearerAuthentication<P>): P? = call.principalOrNull(plugin)
 
 /** Response and error hooks can read the principal after successful verification. */

@@ -24,15 +24,25 @@ private external object NodeHttp {
 
 /** A native Node.js IncomingMessage, including Express requests. */
 external interface NodeRequest : JsAny {
+    /** The native method token; the adapter defaults to GET when it is absent. */
     val method: String?
+
+    /** The native request target; the adapter defaults to `/` when it is absent. */
     val url: String?
 }
 
 /** A native Node.js ServerResponse, including Express responses. */
 external interface NodeResponse : JsAny {
+    /** The numeric status written before ending the response. */
     var statusCode: Int
+
+    /** Whether the host has destroyed the response stream and further writes must be skipped. */
     val destroyed: Boolean
+
+    /** Sets or replaces the response header [name] with [value] through Node.js. */
     fun setHeader(name: String, value: String)
+
+    /** Ends the native response with the supplied text [body]. */
     fun end(body: String)
 }
 
@@ -52,11 +62,18 @@ private external interface NativeServer : JsAny {
     fun close(callback: (NativeError?) -> Unit)
 }
 
-/** Handles a function invocation without opening a listening socket. */
+/**
+ * Handles a function invocation without opening a listening socket.
+ * Construction requires HTTP to be installed in [application].
+ */
 class NodeAdapter(application: Application) {
     private val http = application[Http]
 
-    /** [body] is the host's original UTF-8 body, read before invoking the adapter. */
+    /**
+     * Handles a native request with [body] already read by the host as the original UTF-8 text.
+     * Resolves after handling completes. Unhandled failures are logged and send a 500 response, or destroy
+     * a response whose headers were already sent. HEAD responses omit the body.
+     */
     fun handle(request: NodeRequest, response: NodeResponse, body: String): Promise<JsAny?> = Promise { resolve, _ ->
         handleRequest(request, response, http::handle, body) { resolve(null) }
     }

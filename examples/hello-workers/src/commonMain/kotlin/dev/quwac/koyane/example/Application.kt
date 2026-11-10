@@ -27,14 +27,34 @@ private const val FNV_PRIME = 0x01000193
 private val messagesSerializer = ListSerializer(String.serializer())
 private val users = BearerAuthentication<ExamplePrincipal>()
 
+/**
+ * The authenticated identity used by the example.
+ *
+ * @property name The name returned by the protected `/me` route.
+ */
 data class ExamplePrincipal(val name: String)
 
+/**
+ * JSON input for the example user-creation route.
+ *
+ * @property name The requested user name.
+ */
 @Serializable
 data class CreateUserRequest(val name: String)
 
+/**
+ * JSON response from the example user-creation route.
+ *
+ * @property id The illustrative user identifier returned by the route.
+ * @property name The name supplied in the request.
+ */
 @Serializable
 data class CreateUserResponse(val id: String, val name: String)
 
+/**
+ * Builds the Workers example using [database] for user lookup and Todo persistence.
+ * [verifyToken] supplies principals to protected routes; the default rejects all tokens.
+ */
 fun createApplication(
     database: SqlDatabase,
     verifyToken: suspend (String) -> ExamplePrincipal? = { null },

@@ -9,15 +9,20 @@ import dev.quwac.koyane.http.fetch
 import kotlinx.coroutines.test.TestResult
 import kotlinx.coroutines.test.runTest
 
-/** Runs one isolated Koyane application with an in-memory HTTP client. */
+/**
+ * Runs one isolated Koyane application with an in-memory HTTP client using [runTest].
+ * Return the [TestResult] from the enclosing test so asynchronous completion is observed on JS and Wasm.
+ */
 fun testApplication(block: suspend TestApplicationScope.() -> Unit): TestResult = runTest {
     runTestApplication(block)
 }
 
+/** Owns the application configuration and client for one [testApplication] block. */
 class TestApplicationScope internal constructor() {
     private var configuration: (ApplicationBuilder.() -> Unit)? = null
     private var builtApplication: Application? = null
 
+    /** An in-memory client; its first request builds the configured application, shared by subsequent requests. */
     val client = TestClient(::applicationInstance)
 
     /** Configures the application used by this test. Call once before sending a request. */
@@ -33,7 +38,13 @@ class TestApplicationScope internal constructor() {
     }
 }
 
+/** Sends requests through the application's HTTP lifecycle without opening sockets or invoking host adapters. */
 class TestClient internal constructor(private val application: () -> Application) {
+    /**
+     * Sends [method] to [url], applying [configure] to the supplied [headers] and [body] before dispatch.
+     * Returns a buffered response; unhandled application failures propagate to the test.
+     * Sending a request before configuring the test application throws [IllegalStateException].
+     */
     suspend fun request(
         method: HttpMethod,
         url: String,
@@ -46,6 +57,7 @@ class TestClient internal constructor(private val application: () -> Application
         return TestResponse(response.status, response.headers.toMap(), response.body)
     }
 
+    /** Sends a GET request with the configuration and failure behavior of [request]. */
     suspend fun get(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -53,6 +65,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.GET, url, headers, body, configure)
 
+    /** Sends a POST request with the configuration and failure behavior of [request]. */
     suspend fun post(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -60,6 +73,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.POST, url, headers, body, configure)
 
+    /** Sends a PUT request with the configuration and failure behavior of [request]. */
     suspend fun put(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -67,6 +81,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.PUT, url, headers, body, configure)
 
+    /** Sends a PATCH request with the configuration and failure behavior of [request]. */
     suspend fun patch(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -74,6 +89,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.PATCH, url, headers, body, configure)
 
+    /** Sends a DELETE request with the configuration and failure behavior of [request]. */
     suspend fun delete(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -81,6 +97,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.DELETE, url, headers, body, configure)
 
+    /** Sends a HEAD request through [request]; this in-memory client does not apply a host adapter's body omission. */
     suspend fun head(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -88,6 +105,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.HEAD, url, headers, body, configure)
 
+    /** Sends an OPTIONS request with the configuration and failure behavior of [request]. */
     suspend fun options(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -95,6 +113,7 @@ class TestClient internal constructor(private val application: () -> Application
         configure: TestRequestBuilder.() -> Unit = {},
     ): TestResponse = request(HttpMethod.OPTIONS, url, headers, body, configure)
 
+    /** Sends a QUERY request with the configuration and failure behavior of [request]. */
     suspend fun query(
         url: String,
         headers: Map<String, String> = emptyMap(),
@@ -103,6 +122,11 @@ class TestClient internal constructor(private val application: () -> Application
     ): TestResponse = request(HttpMethod.QUERY, url, headers, body, configure)
 }
 
+/**
+ * Adds headers and query parameters to a test request before dispatch.
+ *
+ * @property body The buffered request text, which the configuration block may replace.
+ */
 class TestRequestBuilder internal constructor(
     private var url: String,
     headers: Map<String, String>,
@@ -136,9 +160,17 @@ class TestRequestBuilder internal constructor(
     )
 }
 
+/**
+ * A buffered response returned by [TestClient].
+ *
+ * @property status The numeric HTTP response status.
+ * @property headers A snapshot of the response header map.
+ */
 class TestResponse internal constructor(val status: Int, val headers: Map<String, String>, private val body: String) {
+    /** Returns the response body unchanged. */
     fun bodyAsText(): String = body
 
+    /** Returns the first header matching [name] case-insensitively, or null when absent. */
     fun header(name: String): String? = headers.entries.firstOrNull {
         it.key.equals(name, ignoreCase = true)
     }?.value

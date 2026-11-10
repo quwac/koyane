@@ -5,6 +5,7 @@ import dev.quwac.koyane.core.koyane
 import dev.quwac.koyane.http.Http
 import dev.quwac.koyane.http.HttpStatus
 
+/** Builds the Node.js Lambda Web Functions example with its HTTP integration-test routes. */
 fun createApplication(): Application = koyane {
     install(Http) {
         get("/hello/:name") { text("Hello, ${param.string("name")}!") }

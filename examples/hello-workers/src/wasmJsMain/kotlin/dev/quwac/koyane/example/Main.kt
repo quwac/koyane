@@ -12,6 +12,7 @@ private external interface ExampleEnvironment : JsAny {
     val DB: CloudflareD1Binding
 }
 
+/** Registers the Worker application factory using the host environment's D1 binding. */
 fun main() = defineWorker<ExampleEnvironment> { environment ->
     createApplication(D1Database(environment.DB))
 }

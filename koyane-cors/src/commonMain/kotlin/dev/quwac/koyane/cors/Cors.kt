@@ -8,6 +8,7 @@ import dev.quwac.koyane.http.HttpStatus
 import dev.quwac.koyane.http.onRequest
 import dev.quwac.koyane.http.onResponse
 
+/** Configures CORS sharing; initially no origins or headers are allowed, and methods are GET, HEAD, and POST. */
 class CorsConfiguration {
     private val origins = mutableSetOf<String>()
     private val methods = mutableSetOf(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.POST)
@@ -15,7 +16,10 @@ class CorsConfiguration {
     private val exposed = mutableSetOf<String>()
     private var anyOrigin = false
 
+    /** Whether to emit credential permission; defaults to false and cannot be combined with [allowAnyOrigin]. */
     var allowCredentials: Boolean = false
+
+    /** Preflight cache duration in seconds, defaulting to zero; installation rejects negative values. */
     var maxAgeSeconds: Long = 0
 
     /** An exact serialized ASCII HTTP(S) origin, without a path or trailing slash. */
@@ -24,18 +28,22 @@ class CorsConfiguration {
         origins += origin
     }
 
+    /** Allows any valid HTTP(S) origin using `*`; installation rejects this when [allowCredentials] is true. */
     fun allowAnyOrigin() {
         anyOrigin = true
     }
 
+    /** Adds [method] to the allowed preflight methods without removing the defaults. */
     fun allowMethod(method: HttpMethod) {
         methods += method
     }
 
+    /** Allows a request header by case-insensitive [name]; invalid header names throw [IllegalArgumentException]. */
     fun allowHeader(name: String) {
         headers += checkedHeaderName(name)
     }
 
+    /** Exposes a response header by [name]; invalid header names throw [IllegalArgumentException]. */
     fun exposeHeader(name: String) {
         exposed += checkedHeaderName(name)
     }
@@ -108,6 +116,7 @@ class CorsPolicy internal constructor(
     }
 }
 
+/** Handles preflights before routing and applies CORS headers to responses through the public HTTP lifecycle. */
 object Cors : Plugin<CorsConfiguration, CorsPolicy> {
     override fun createConfiguration(): CorsConfiguration = CorsConfiguration()
     override fun install(configuration: CorsConfiguration): CorsPolicy = configuration.build()
