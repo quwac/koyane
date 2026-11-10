@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "wrangler": "4.151.0"
+    "wrangler": "4.158.0"
   },
   "overrides": {
     "undici": "7.30.1"
