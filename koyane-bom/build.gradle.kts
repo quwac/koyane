@@ -1,8 +1,5 @@
-import org.gradle.api.publish.maven.MavenPublication
-
 plugins {
     `java-platform`
-    `maven-publish`
 }
 
 dependencies {
@@ -21,13 +18,5 @@ dependencies {
         api(project(":koyane-node"))
         api(project(":koyane-fetch"))
         api(project(":koyane-lambda"))
-    }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["javaPlatform"])
-        }
     }
 }

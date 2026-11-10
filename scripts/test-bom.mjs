@@ -1,15 +1,32 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { access, mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const root = fileURLToPath(new URL("../", import.meta.url));
-const reports = path.join(root, "build/reports/bom-tests");
+const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
+const reports = path.join(repositoryRoot, "build/reports/bom-tests");
 await mkdir(reports, { recursive: true });
 const work = await mkdtemp(path.join(reports, "run-"));
 const repository = path.join(work, "repository");
 const consumer = path.join(work, "consumer");
+const root = path.join(work, "source");
+const selected = spawnSync(
+  "git",
+  ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+  {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    timeout: 30_000,
+  },
+);
+if (selected.error) throw selected.error;
+assert.equal(selected.status, 0, selected.stderr);
+for (const file of new Set(selected.stdout.split("\0").filter(Boolean))) {
+  const destination = path.join(root, file);
+  await mkdir(path.dirname(destination), { recursive: true });
+  await cp(path.join(repositoryRoot, file), destination);
+}
 
 async function gradle(label, args) {
   const result = spawnSync("./gradlew", [...args, "--console=plain"], {

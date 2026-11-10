@@ -18,7 +18,7 @@
     <img src="https://img.shields.io/badge/Kotlin-Wasm-7F52FF?logo=kotlin&amp;logoColor=white" alt="Kotlin/Wasm">
   </a>
   <a href="https://gradle.org/">
-    <img src="https://img.shields.io/badge/Gradle-9.8.2-02303A?logo=gradle&amp;logoColor=white" alt="Gradle 9.8.2">
+    <img src="https://img.shields.io/badge/Gradle-9.9.0-02303A?logo=gradle&amp;logoColor=white" alt="Gradle 9.9.0">
   </a>
   <a href="https://openjdk.org/">
     <img src="https://img.shields.io/badge/JDK-17-007396?logo=openjdk&amp;logoColor=white" alt="JDK 17">
@@ -96,12 +96,12 @@ and [Lucide via Iconify](https://icon-sets.iconify.design/lucide/).
 
 ## Dependencies
 
-`dev.koyane:koyane-bom` aligns the versions of all Koyane library modules.
+`dev.quwac.koyane:koyane-bom` aligns the versions of all Koyane library modules.
 Import the BOM and add the modules used by your application without individual versions.
 The BOM does not add libraries or install plugins automatically.
 
 These snapshot coordinates require [local Maven publication](CONTRIBUTING.md#maven-publications).
-This build does not configure a remote Maven repository for publication.
+For a released version, use `mavenCentral()` and that release's BOM version.
 The snippet below belongs in a Kotlin Multiplatform build targeting `js`, `wasmJs`, or both.
 
 ```kotlin
@@ -113,16 +113,16 @@ repositories {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
-            implementation("dev.koyane:koyane-workers") // Choose the module for your service above.
-            // implementation("dev.koyane:koyane-logging")
+            implementation(project.dependencies.platform("dev.quwac.koyane:koyane-bom:0.0.1-SNAPSHOT"))
+            implementation("dev.quwac.koyane:koyane-workers") // Choose the module for your service above.
+            // implementation("dev.quwac.koyane:koyane-logging")
         }
     }
 }
 ```
 
 All adapters expose HTTP and Core transitively.
-For a runtime-independent library, use `dev.koyane:koyane-http` with the same BOM.
+For a runtime-independent library, use `dev.quwac.koyane:koyane-http` with the same BOM.
 Source-based multi-project builds can use `implementation(project(":koyane-http"))` directly.
 
 ## Application
