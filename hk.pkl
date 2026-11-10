@@ -19,12 +19,12 @@ steps {
     exclusive = true
   }
   ["oxlint"] {
-    glob = List("**/*.js", "**/*.mjs", "**/*.cjs")
+    glob = List("**/*.js", "**/*.mjs", "**/*.cjs", "**/*.ts")
     check = new Command { argv = List("bun", "run", "--bun", "oxlint", "--deny-warnings", "{{files}}") }
     fix = new Command { argv = List("bun", "run", "--bun", "oxlint", "--deny-warnings", "--fix", "{{files}}") }
   }
   ["oxfmt"] {
-    glob = List("**/*.js", "**/*.mjs", "**/*.cjs", "**/*.json", "**/*.jsonc")
+    glob = List("**/*.js", "**/*.mjs", "**/*.cjs", "**/*.ts", "**/*.json", "**/*.jsonc")
     exclude = List("**/package-lock.json")
     depends = "oxlint"
     check = new Command { argv = List("bun", "run", "--bun", "oxfmt", "--check", "{{files}}") }

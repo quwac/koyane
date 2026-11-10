@@ -15,6 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "koyane"
 include(
+    ":koyane-bom",
     ":koyane-core",
     ":koyane-http",
     ":koyane-content-negotiation",
@@ -26,8 +27,14 @@ include(
     ":koyane-logging",
     ":koyane-testing",
     ":koyane-workers",
-    ":koyane-workers-d1",
+    ":koyane-node",
+    ":koyane-fetch",
+    ":koyane-lambda",
+    ":examples:hello-fetch-functions",
+    ":examples:hello-cloud-run-functions",
+    ":examples:hello-lambda",
     ":examples:hello-workers",
+    ":examples:hello-lambda-web",
 )
 
 if (providers.gradleProperty("compileFixture").isPresent) {

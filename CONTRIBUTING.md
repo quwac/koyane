@@ -2,8 +2,10 @@
 
 Run these commands from the repository root.
 
-The [README](README.md) covers the framework API.
+The [README](README.md) covers supported runtimes, dependencies, and a minimal application.
+The [cheat sheet](docs/CHEATSHEET.md) covers APIs and their behavior.
 The [Workers example](examples/hello-workers/README.md) covers local execution and deployment.
+The [Lambda Web Functions example](examples/hello-lambda-web/README.md) covers Node.js execution and AWS packaging.
 
 ## Set up
 
@@ -21,7 +23,7 @@ mise run setup
 | Eclipse Temurin 17 | Gradle, Kotlin compiler, and detekt |
 | Bun | Repository scripts and dependency installation |
 | rumdl | Markdown linting and formatting |
-| Node.js | Wrangler |
+| Node.js | Wrangler and Node HTTP adapter integration tests |
 | hk | Formatting, linting, links, workflow checks, and pre-commit hooks |
 | Gradle wrapper | Kotlin builds and tests |
 
@@ -39,16 +41,26 @@ mise run test
 | Command | Checks |
 | --- | --- |
 | `hk check --all` | Kotlin and JavaScript formatting/linting, Markdown linting and links, dependency use, secrets, and workflow files |
-| `mise run test` | Kotlin tests, Kotlin/Wasm compiler fixtures, and local workerd integration tests for both targets |
+| `mise run test` | Kotlin tests, compiler fixtures, BOM consumption, Workers, Node, and HTTP function integration tests (Docker required) |
 | `mise run test:compile` | Compiler fixtures only |
+| `mise run test:bom` | Isolated Maven publication and versionless Kotlin/JS and Kotlin/Wasm consumers |
 | `mise run test:workers:wasm` | Kotlin/Wasm Worker integration test |
 | `mise run test:workers:js` | Kotlin/JS Worker integration test |
+| `mise run test:node` | Kotlin/JS and Kotlin/Wasm Node HTTP integration tests |
+| `mise run test:functions:node` | JS/Wasm Vercel Fetch contract, Lambda HTTP events, and official Functions Framework |
+| `mise run test:functions:edge` | JS/Wasm Supabase Edge Runtime user workers (Docker required) |
 | `mise run deploy:dry-run:wasm` | Kotlin/Wasm Worker bundle without upload |
 | `mise run deploy:dry-run:js` | Kotlin/JS Worker bundle without upload |
 
 `mise run test` runs its tasks in sequence because the repository does not run concurrent Gradle builds in one checkout.
 The Worker tests build a production bundle, apply the example migrations to isolated local D1 state,
 then make HTTP requests through workerd.
+Function examples contain their own packaging and deployment instructions:
+[Vercel and Supabase](examples/hello-fetch-functions/README.md),
+[Cloud Run functions](examples/hello-cloud-run-functions/README.md), and
+[Lambda Event Functions](examples/hello-lambda/README.md).
+Supabase tests start a pinned Edge Runtime container, exercise user workers, and remove the container on completion.
+These tests do not deploy to cloud services.
 
 Use `hk fix --all` for supported formatting fixes.
 It does not stage files.
@@ -66,6 +78,29 @@ Gradle uses strict dependency verification.
 IDE import downloads source artifacts as well as build artifacts, so source checksums must be present in `gradle/verification-metadata.xml`.
 After changing a Gradle dependency, reload the project and fix every reported verification entry before committing.
 
+## Maven publications
+
+The `koyane-bom` Java platform manages the common version of every public `koyane-*` library module.
+Library modules publish their Kotlin Multiplatform, JavaScript, and Wasm artifacts with Gradle's `maven-publish` plugin.
+Examples and compiler fixtures are not published.
+
+Publish the current snapshot to your local Maven repository:
+
+```sh
+mise exec -- ./gradlew publishToMavenLocal
+```
+
+The coordinates are `dev.koyane:<module>:0.0.1-SNAPSHOT`.
+Consumers import `platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT")` and omit versions from module dependencies.
+See [Dependencies](README.md#dependencies) for BOM setup
+and [Supported services](README.md#supported-services) for adapter selection.
+
+`mise run test:bom` publishes to an isolated repository under `build/reports/bom-tests`.
+It checks BOM coverage and POM packaging, compiles versionless JS/Wasm consumers,
+and verifies that importing the BOM does not pull optional modules into a minimal HTTP application.
+External dependencies retain strict verification in the consumer builds.
+No remote publishing repository, credentials, or release workflow is configured.
+
 ## Dependency updates
 
 Keep version declarations, lockfiles, and Gradle verification metadata together.
@@ -81,7 +116,7 @@ hk check --all
 mise run test
 ```
 
-The root `bun.lock` covers repository tools.
+The root `bun.lock` covers repository tools and the Functions Framework integration-test dependency.
 `examples/hello-workers/bun.lock` covers Wrangler and example scripts.
 Update either lockfile through Bun; do not edit it by hand.
 

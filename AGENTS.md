@@ -34,21 +34,30 @@
 
 Core, HTTP, authentication, CORS, error handling, and Logging provide
 runtime-independent APIs targeting Kotlin `js` and `wasmJs`.
-`koyane-workers` provides the Cloudflare Workers Fetch adapter. JVM, WASI, Native,
+`koyane-fetch` provides the shared native Fetch adapter; `koyane-workers` provides Cloudflare registration. JVM, WASI, Native,
 GraphQL, gRPC, OpenAPI, client generation, and compiler plugins are outside this
-version's scope. Kagiroi provides D1 SQL access in the example;
-`koyane-workers-d1` connects the Cloudflare binding, Kagiroi driver, and
-Workers adapter.
+version's scope. The Workers adapter is independent of databases and drivers.
+The example constructs Kagiroi's D1 driver from its typed host environment in
+the target source sets and passes it to common application code.
+`koyane-node` serves HTTP through Node.js on both targets. The Lambda Web Functions
+example owns AWS listen-address configuration and deployment packaging.
 
 - `koyane-core`: typed plugin configuration, installation, and extension lookup.
+- `koyane-bom`: Maven BOM and Gradle platform aligning all public library module versions without adding runtime dependencies.
 - `koyane-http`: HTTP messages, named routes, typed input extraction, response builders, and handlers.
 - `koyane-bearer-authentication`: optional HTTP Bearer authentication through the public Core and HTTP APIs.
 - `koyane-cors`: optional CORS policy, preflight handling, and response sharing through the public HTTP API.
 - `koyane-error-handling`: optional exception and HTTP failure conversion through the public HTTP lifecycle.
 - `koyane-logging`: optional HTTP lifecycle logging through the public Core and HTTP APIs.
 - `koyane-workers`: Wasm/JavaScript and Fetch API adapter.
-- `koyane-workers-d1`: common D1 Worker definition backed by the target-specific Workers and Kagiroi adapters.
+- `koyane-node`: Node.js HTTP server and native function request/response adapter with buffered text bodies.
+- `koyane-fetch`: native Fetch request/response adapter for JS and Wasm hosts.
+- `koyane-lambda`: API Gateway HTTP API and Function URL payload 2.0 adapter.
 - `examples/hello-workers`: example application, Workers packaging, and integration tests.
+- `examples/hello-fetch-functions`: shared Vercel Node.js and Supabase Edge Functions application and packages.
+- `examples/hello-cloud-run-functions`: HTTP Functions Framework application and packages.
+- `examples/hello-lambda`: Lambda HTTP event application and packages.
+- `examples/hello-lambda-web`: database-independent Node.js application and Lambda Web Functions packaging.
 - `compile-tests`: positive and deliberately invalid Kotlin/Wasm compiler fixtures.
 
 JDK runs Gradle, the Kotlin compiler, and detekt. It is a build requirement. The
@@ -72,6 +81,9 @@ with `mise exec --`.
 hk check --all
 hk check --all --profile ci
 mise run test
+mise run test:node
+mise run test:functions:node
+mise run test:functions:edge # Requires Docker
 mise run deploy:dry-run:wasm
 mise run deploy:dry-run:js
 ```

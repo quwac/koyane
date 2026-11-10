@@ -1,3 +1,6 @@
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
+
 plugins {
     kotlin("multiplatform") version "2.4.21" apply false
     kotlin("plugin.serialization") version "2.4.21" apply false
@@ -7,6 +10,35 @@ plugins {
 allprojects {
     group = "dev.koyane"
     version = "0.0.1-SNAPSHOT"
+}
+
+subprojects {
+    if (path.startsWith(":koyane-") && name != "koyane-bom") {
+        pluginManager.apply("maven-publish")
+    }
+    pluginManager.withPlugin("maven-publish") {
+        extensions.configure<PublishingExtension> {
+            publications.withType<MavenPublication>().configureEach {
+                pom {
+                    name.set(project.name)
+                    description.set("Typed Kotlin Multiplatform applications for JavaScript and WebAssembly.")
+                    url.set("https://github.com/quwac/koyane")
+                    licenses {
+                        license {
+                            name.set("MIT License")
+                            url.set("https://opensource.org/license/mit")
+                            distribution.set("repo")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:https://github.com/quwac/koyane.git")
+                        developerConnection.set("scm:git:ssh://git@github.com/quwac/koyane.git")
+                        url.set("https://github.com/quwac/koyane")
+                    }
+                }
+            }
+        }
+    }
 }
 
 dependencies {

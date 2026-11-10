@@ -29,154 +29,132 @@
 </p>
 
 Koyane (こやね, pronounced "koh-yah-neh") is a Kotlin framework with a typed plugin API.
-Applications are written in common Kotlin and built for Kotlin/JS or Kotlin/Wasm.
+Applications use common Kotlin, with Kotlin/JS and Kotlin/Wasm adapters for Fetch hosts, Node.js servers, and HTTP functions.
 Core and HTTP are runtime-independent; adapters connect applications to host runtimes.
 
 The API is experimental.
 
 - [Cheat sheet](docs/CHEATSHEET.md)
-- [Workers example](examples/hello-workers/README.md)
 - [Contributing](CONTRIBUTING.md)
 
-## Application
+## Supported services
 
-Use the source modules in this repository from a Gradle multi-project build.
+All adapters target Kotlin/JS and Kotlin/Wasm.
+Choose your hosting service, then add the module listed below.
+Application code uses the same runtime-independent Core and HTTP APIs on every host.
+
+### Functions and edge services
+
+| Service | Runtime used by Koyane | Module | Example |
+| --- | --- | --- | --- |
+| <img src="https://raw.githubusercontent.com/gilbarbara/logos/22f03ffc4a652309d1fea4ade70f46e9e1d6602c/logos/cloudflare-workers-icon.svg" width="20" height="20" alt=""> [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Workers runtime | `koyane-workers` | [Workers](examples/hello-workers/README.md) |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/lambda.png" width="20" height="20" alt=""> [AWS Lambda Event Functions](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html) | Node.js | `koyane-lambda` | [Lambda HTTP events](examples/hello-lambda/README.md) |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/lambda.png" width="20" height="20" alt=""> [AWS Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html) | Node.js | `koyane-node` | [Lambda HTTP server](examples/hello-lambda-web/README.md) |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/gcp/compute/functions.png" width="20" height="20" alt=""> [Google Cloud Run functions](https://docs.cloud.google.com/run/docs/write-functions) | Node.js | `koyane-node` | [Cloud Run functions](examples/hello-cloud-run-functions/README.md) |
+| <img src="https://assets.vercel.com/image/upload/front/favicon/vercel/180x180.png" width="20" height="20" alt=""> [Vercel Functions](https://vercel.com/docs/functions/runtimes/node-js) | Node.js | `koyane-fetch` | [Vercel](examples/hello-fetch-functions/README.md#vercel) |
+| <img src="https://raw.githubusercontent.com/gilbarbara/logos/22f03ffc4a652309d1fea4ade70f46e9e1d6602c/logos/supabase-icon.svg" width="20" height="20" alt=""> [Supabase Edge Functions](https://supabase.com/docs/guides/functions) | Supabase Edge Runtime (Deno) | `koyane-fetch` | [Supabase](examples/hello-fetch-functions/README.md#supabase) |
+
+The runtime column identifies the runtime used by this implementation; services may offer other runtimes.
+Kotlin/Wasm runs through a JavaScript entry point within that runtime.
+Lambda Event Functions support API Gateway HTTP API and Function URL payload 2.0.
+Cloud Run functions use Google's Node.js Functions Framework.
+Compatibility is checked locally; deployment to these cloud services is not verified.
+
+### Virtual machines and container services
+
+The following hosts can run the Node.js HTTP server on either Kotlin target.
+On virtual machines such as Compute Engine, run directly on Node.js or use a container.
+Container services run the same application packaged as a container image.
+
+| Service | Runtime used by Koyane | Module | Deployment |
+| --- | --- | --- | --- |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/ec2.png" width="20" height="20" alt=""> [Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html) | Node.js | `koyane-node` | Directly or in a container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/gcp/compute/compute-engine.png" width="20" height="20" alt=""> [Google Compute Engine](https://docs.cloud.google.com/compute/docs/overview) | Node.js | `koyane-node` | Directly or in a container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/azure/compute/vm.png" width="20" height="20" alt=""> [Azure Virtual Machines](https://learn.microsoft.com/en-us/azure/virtual-machines/overview) | Node.js | `koyane-node` | Directly or in a container |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/oci/compute/vm-white.png"><img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/oci/compute/vm.png" width="20" height="20" alt=""></picture> [OCI Compute](https://docs.oracle.com/en-us/iaas/Content/Compute/Concepts/computeoverview.htm) | Node.js | `koyane-node` | Directly or in a container |
+| <img src="https://api.iconify.design/lucide/server.svg?color=%237d8590" width="20" height="20" alt=""> Self-hosted virtual machines or physical servers | Node.js | `koyane-node` | Directly or in a container, such as [Docker](https://docs.docker.com/guides/nodejs/) |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/elastic-container-service.png" width="20" height="20" alt=""> [Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-task-definition.html), including Fargate and [Express Mode](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-overview.html) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/elastic-kubernetes-service.png" width="20" height="20" alt=""> [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-concepts.html) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/elastic-beanstalk.png" width="20" height="20" alt=""> [AWS Elastic Beanstalk Docker](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_docker.html) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/lightsail.png" width="20" height="20" alt=""> [Amazon Lightsail container services](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-container-services.html) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/gcp/compute/run.png" width="20" height="20" alt=""> [Google Cloud Run](https://docs.cloud.google.com/run/docs/container-contract) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/gcp/compute/kubernetes-engine.png" width="20" height="20" alt=""> [Google Kubernetes Engine (GKE)](https://docs.cloud.google.com/kubernetes-engine/docs/deploy-app-cluster) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/gcp/compute/app-engine.png" width="20" height="20" alt=""> [Google App Engine flexible custom runtimes](https://docs.cloud.google.com/appengine/docs/flexible/custom-runtimes/build) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/azure/compute/container-apps.png" width="20" height="20" alt=""> [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/ingress-how-to) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/azure/appservices/app-services.png" width="20" height="20" alt=""> [Azure App Service custom containers](https://learn.microsoft.com/azure/app-service/configure-custom-container) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/azure/compute/kubernetes-services.png" width="20" height="20" alt=""> [Azure Kubernetes Service (AKS)](https://learn.microsoft.com/en-us/azure/aks/secure-aks) | Node.js | `koyane-node` | Container |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/oci/compute/container-white.png"><img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/oci/compute/container.png" width="20" height="20" alt=""></picture> [OCI Container Instances](https://docs.oracle.com/en-us/iaas/Content/container-instances/home.htm) | Node.js | `koyane-node` | Container |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/oci/compute/oke-white.png"><img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/oci/compute/oke.png" width="20" height="20" alt=""></picture> [Oracle Kubernetes Engine (OKE)](https://docs.oracle.com/en-us/iaas/Content/ContEng/) | Node.js | `koyane-node` | Container |
+| <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/app-runner.png" width="20" height="20" alt=""> [AWS App Runner](https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html) | Node.js | `koyane-node` | Container; existing App Runner customers only |
+
+These are hosting options for the Node.js server; service-specific deployment configurations are not included.
+
+Icon sources: [Diagrams](https://github.com/mingrammer/diagrams/tree/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources),
+[SVG Logos](https://github.com/gilbarbara/logos/tree/22f03ffc4a652309d1fea4ade70f46e9e1d6602c/logos),
+[Vercel](https://assets.vercel.com/image/upload/front/favicon/vercel/180x180.png),
+and [Lucide via Iconify](https://icon-sets.iconify.design/lucide/).
+
+## Dependencies
+
+`dev.koyane:koyane-bom` aligns the versions of all Koyane library modules.
+Import the BOM and add the modules used by your application without individual versions.
+The BOM does not add libraries or install plugins automatically.
+
+These snapshot coordinates require [local Maven publication](CONTRIBUTING.md#maven-publications).
+This build does not configure a remote Maven repository for publication.
+The snippet below belongs in a Kotlin Multiplatform build targeting `js`, `wasmJs`, or both.
 
 ```kotlin
-commonMain.dependencies {
-    implementation(project(":koyane-http"))
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
+            implementation("dev.koyane:koyane-workers") // Choose the module for your service above.
+            // implementation("dev.koyane:koyane-logging")
+        }
+    }
 }
 ```
+
+All adapters expose HTTP and Core transitively.
+For a runtime-independent library, use `dev.koyane:koyane-http` with the same BOM.
+Source-based multi-project builds can use `implementation(project(":koyane-http"))` directly.
+
+## Application
 
 Install HTTP explicitly and return an `HttpResponse` from every handler.
 
 ```kotlin
 import dev.quwac.koyane.core.koyane
 import dev.quwac.koyane.http.Http
-import dev.quwac.koyane.http.text
 
 val app = koyane {
     install(Http) {
-        get("/organizations/:organizationId/users/{userId}") {
-            val organizationId = param.uuid("organizationId")
-            val userId = param.uuid("userId")
-            val page = query.long("page", default = 1L)
-            val enabled = query.boolean("enabled", default = true)
-
-            text("$organizationId/$userId/$page/$enabled")
-        }
+        get("/hello/:name") { text("Hello, ${param.string("name")}!") }
     }
 }
 ```
 
-Routes accept named `:id` and `{id}` segments.
-`get`, `post`, `put`, `patch`, `delete`, `head`, `options`, and `query` register methods explicitly.
-`query(path) { ... }` registers the HTTP QUERY method; `query.long("page")` reads a URL query value.
-
-`param`, `query`, and `header` provide typed extraction.
-
-| Form | Missing value | Invalid value |
-| --- | --- | --- |
-| `string`, `boolean`, `uuid`, numeric, `instant`, `duration` | 400 | 400 |
-| `...OrNull` | `null` | 400 |
-| Numeric, Boolean, Instant, or Duration with `default` | Default | 400 |
-
-Unknown paths return 404.
-A path with no handler for its method returns 405 with `Allow`.
-Request bodies are buffered text and are read with `body.text()`.
-
-## Plugins
-
-Every optional feature is a module and is installed explicitly.
-
-| Module | API | Use |
-| --- | --- | --- |
-| `koyane-content-negotiation` | `ContentNegotiation` | Content-type selection and codecs |
-| `koyane-kotlinx-serialization` | `json`, `receive`, `respond` | `kotlinx.serialization` JSON codec |
-| `koyane-cors` | `Cors` | CORS preflight and response headers |
-| `koyane-bearer-authentication` | `BearerAuthentication` | Bearer guards with a typed principal |
-| `koyane-error-handling` | `ErrorHandling` | Exception and HTTP-failure responses |
-| `koyane-logging` | `Logging` | Request, response, and failure logging |
-| `koyane-kotlinx-datetime` | Input extensions | `kotlinx-datetime` extraction |
-| `koyane-testing` | `testApplication` | In-memory application tests |
-| `koyane-workers` | `defineWorker` | Cloudflare Workers Fetch adapter |
-| `koyane-workers-d1` | `defineD1Worker` | D1 binding with Kagiroi |
-
-For JSON, add the Content Negotiation and Kotlin serialization modules, then supply serializers at the call site.
-
-```kotlin
-val app = koyane {
-    install(ContentNegotiation) {
-        json()
-    }
-    install(Http) {
-        post("/users") {
-            val request = receive(CreateUserRequest.serializer())
-            respond(
-                CreateUserResponse(id = "123", name = request.name),
-                CreateUserResponse.serializer(),
-            )
-        }
-    }
-}
-```
-
-Koyane does not infer serializers, bind request DTOs, or install plugins automatically.
-
-## Test applications
-
-`koyane-testing` dispatches through the same application and HTTP pipeline without opening a port.
-
-```kotlin
-import dev.quwac.koyane.http.Http
-import dev.quwac.koyane.http.text
-import dev.quwac.koyane.testing.testApplication
-import kotlin.test.Test
-import kotlin.test.assertEquals
-
-class HelloTest {
-    @Test
-    fun hello() = testApplication {
-        application {
-            install(Http) {
-                get("/hello") { text("hello") }
-            }
-        }
-
-        assertEquals(200, client.get("/hello").status)
-    }
-}
-```
-
-## Cloudflare Workers
-
-`koyane-workers` adapts Fetch requests and responses at the target boundary.
-`koyane-workers-d1` creates a Kagiroi `D1Database` from the Worker binding, so application setup can stay in `commonMain`.
-
-The [Workers example](examples/hello-workers/README.md) includes Kotlin/JS and Kotlin/Wasm builds,
-local D1 migrations, CORS, Bearer authentication, JSON, and typed D1 CRUD.
+Optional modules provide content negotiation, explicit JSON codecs, CORS, Bearer authentication,
+error handling, logging, date/time inputs, and in-memory application tests.
+See the [cheat sheet](docs/CHEATSHEET.md) for API examples and behavior.
 
 ## Scope
 
-The current build targets Kotlin/JS and Kotlin/Wasm.
 Core and HTTP are independent of Fetch and host bindings.
-`koyane-workers` provides the Cloudflare Workers adapter.
+CloudEvents, SQS events, API Gateway payload 1.0, and ALB events are outside the HTTP adapters' scope.
+
+The adapters have no database or driver dependency; applications supply their own database clients.
+Applications that need database access are expected to use [Kagiroi](https://github.com/quwac/kagiroi)
+as their database client.
 The current HTTP model uses buffered text bodies.
 Binary or streaming bodies, automatic request binding, OpenAPI generation, client generation,
 and a JVM server adapter are not part of this repository.
-
-## Development
-
-```sh
-mise trust
-mise install --locked java bun node hk pkl lychee gh zizmor betterleaks \
-    github:github/gh-actions-lock github:jdx/jactionlint
-mise run setup
-hk check --all
-mise run test
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for IntelliJ setup, focused checks, dependency verification, and CI maintenance.
 
 ## License
 
