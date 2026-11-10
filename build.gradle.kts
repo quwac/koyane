@@ -26,7 +26,7 @@ val publishedProjects = setOf(
 )
 
 allprojects {
-    group = "dev.koyane"
+    group = "dev.quwac.koyane"
     version = providers.gradleProperty("version").getOrElse("0.0.1-SNAPSHOT")
 }
 

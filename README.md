@@ -96,7 +96,7 @@ and [Lucide via Iconify](https://icon-sets.iconify.design/lucide/).
 
 ## Dependencies
 
-`dev.koyane:koyane-bom` aligns the versions of all Koyane library modules.
+`dev.quwac.koyane:koyane-bom` aligns the versions of all Koyane library modules.
 Import the BOM and add the modules used by your application without individual versions.
 The BOM does not add libraries or install plugins automatically.
 
@@ -113,16 +113,16 @@ repositories {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(project.dependencies.platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT"))
-            implementation("dev.koyane:koyane-workers") // Choose the module for your service above.
-            // implementation("dev.koyane:koyane-logging")
+            implementation(project.dependencies.platform("dev.quwac.koyane:koyane-bom:0.0.1-SNAPSHOT"))
+            implementation("dev.quwac.koyane:koyane-workers") // Choose the module for your service above.
+            // implementation("dev.quwac.koyane:koyane-logging")
         }
     }
 }
 ```
 
 All adapters expose HTTP and Core transitively.
-For a runtime-independent library, use `dev.koyane:koyane-http` with the same BOM.
+For a runtime-independent library, use `dev.quwac.koyane:koyane-http` with the same BOM.
 Source-based multi-project builds can use `implementation(project(":koyane-http"))` directly.
 
 ## Application

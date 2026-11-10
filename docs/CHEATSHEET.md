@@ -4,7 +4,7 @@ Examples target Kotlin/JS and Kotlin/Wasm. Core and HTTP are runtime-independent
 Each Kotlin block is a separate example with its own imports.
 See [Dependencies](../README.md#dependencies) for BOM-based dependencies and source-module usage.
 Add the optional modules used by your application explicitly.
-The `dev.koyane:koyane-bom` platform aligns versions; it does not add libraries or install plugins.
+The `dev.quwac.koyane:koyane-bom` platform aligns versions; it does not add libraries or install plugins.
 
 | Module | Import package |
 | --- | --- |

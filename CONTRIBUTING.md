@@ -99,8 +99,8 @@ Publish the current snapshot to your local Maven repository:
 mise exec -- ./gradlew publishToMavenLocal
 ```
 
-The coordinates are `dev.koyane:<module>:0.0.1-SNAPSHOT`.
-Consumers import `platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT")` and omit versions from module dependencies.
+The coordinates are `dev.quwac.koyane:<module>:0.0.1-SNAPSHOT`.
+Consumers import `platform("dev.quwac.koyane:koyane-bom:0.0.1-SNAPSHOT")` and omit versions from module dependencies.
 See [Dependencies](README.md#dependencies) for BOM setup
 and [Supported services](README.md#supported-services) for adapter selection.
 
@@ -126,8 +126,9 @@ must all succeed before a separate job signs and publishes the libraries and BOM
 GitHub Release creation runs after publication with its own `contents: write` permission.
 The verification jobs do not receive publishing secrets.
 
-The Central Portal account must have publishing access to `dev.koyane`.
-If the namespace is unregistered, verify ownership of `koyane.dev` using the
+The Central Portal account must have publishing access covering `dev.quwac.koyane`,
+such as access to its parent namespace `dev.quwac`.
+If the parent namespace is unregistered, verify ownership of `quwac.dev` using the
 [Sonatype namespace procedure](https://central.sonatype.org/register/namespace/).
 Distribute the signing key's public key as described in the
 [Central signing requirements](https://central.sonatype.org/publish/requirements/gpg/).
