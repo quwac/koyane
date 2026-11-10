@@ -31,7 +31,7 @@ jobs:
             --locked java bun node hk pkl lychee gh rumdl zizmor betterleaks
             github:github/gh-actions-lock github:jdx/jactionlint
           cache: true
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - run: mise run deps
       - run: hk check --all --profile ci
         env:
@@ -50,7 +50,7 @@ jobs:
           sha256: 3d825b8341925abb398fba6fd8dcd7d6e92ade6820d892da62992e0765638e66
           install_args: --locked java bun
           cache: true
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - run: mise run test:kotlin
       - run: mise run test:bom
 
@@ -71,7 +71,7 @@ jobs:
           sha256: 3d825b8341925abb398fba6fd8dcd7d6e92ade6820d892da62992e0765638e66
           install_args: --locked java bun
           cache: true
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           cache-read-only: true
       - run: mise run test:compile
@@ -92,7 +92,7 @@ jobs:
           sha256: 3d825b8341925abb398fba6fd8dcd7d6e92ade6820d892da62992e0765638e66
           install_args: --locked java bun node
           cache: true
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - run: mise run test:workers:wasm
       - run: mise run test:workers:js
       - run: mise run test:node
