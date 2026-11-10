@@ -6,7 +6,7 @@ workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'gradle/actions@3f5f9adaf7d9fecd50b5935e54106014257a94e6'
-        - 'jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d'
+        - 'jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b'
 dependencies:
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1':
         ref: 'v7.0.1'
@@ -18,8 +18,8 @@ dependencies:
         commit: 'sha1-3f5f9adaf7d9fecd50b5935e54106014257a94e6'
         owner_id: 124156
         repo_id: 743626948
-    'jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d':
-        ref: 'v5.2.4'
-        commit: 'sha1-6be3c7ed4c21d4f76b208d351d95aac273ebb76d'
+    'jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b':
+        ref: 'v5.2.7'
+        commit: 'sha1-b44d12e7d0d8ee7461bb893e1b1993500433185b'
         owner_id: 216188
         repo_id: 738284564
