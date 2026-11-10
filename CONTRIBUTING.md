@@ -44,6 +44,7 @@ mise run test
 | `mise run test` | Kotlin tests, compiler fixtures, BOM consumption, Workers, Node, and HTTP function integration tests (Docker required) |
 | `mise run test:compile` | Compiler fixtures only |
 | `mise run test:bom` | Isolated Maven publication and versionless Kotlin/JS and Kotlin/Wasm consumers |
+| `mise run test:release` | Release guards and tag-only pushes against temporary local Git repositories |
 | `mise run test:workers:wasm` | Kotlin/Wasm Worker integration test |
 | `mise run test:workers:js` | Kotlin/JS Worker integration test |
 | `mise run test:node` | Kotlin/JS and Kotlin/Wasm Node HTTP integration tests |
@@ -88,7 +89,8 @@ After changing a Gradle dependency, reload the project and fix every reported ve
 ## Maven publications
 
 The `koyane-bom` Java platform manages the common version of every public `koyane-*` library module.
-Library modules publish their Kotlin Multiplatform, JavaScript, and Wasm artifacts with Gradle's `maven-publish` plugin.
+The Vanniktech Maven Publish plugin publishes Kotlin Multiplatform, JavaScript, and Wasm artifacts,
+including sources and Javadoc archives, for the explicit public-module list in `build.gradle.kts`.
 Examples and compiler fixtures are not published.
 
 Publish the current snapshot to your local Maven repository:
@@ -102,11 +104,57 @@ Consumers import `platform("dev.koyane:koyane-bom:0.0.1-SNAPSHOT")` and omit ver
 See [Dependencies](README.md#dependencies) for BOM setup
 and [Supported services](README.md#supported-services) for adapter selection.
 
-`mise run test:bom` publishes to an isolated repository under `build/reports/bom-tests`.
+`mise run test:bom` copies Git-selected sources and publishes to an isolated repository under `build/reports/bom-tests`.
+The source copy keeps publication versions and generated npm workspace files out of the main build's test workspace.
 It checks BOM coverage and POM packaging, compiles versionless JS/Wasm consumers,
 and verifies that importing the BOM does not pull optional modules into a minimal HTTP application.
 External dependencies retain strict verification in the consumer builds.
-No remote publishing repository, credentials, or release workflow is configured.
+The `version` Gradle property overrides the default `0.0.1-SNAPSHOT` across all publications.
+To verify a release version locally without uploading it:
+
+```sh
+ORG_GRADLE_PROJECT_version=0.1.0 mise run test:bom
+```
+
+## Releases
+
+The Publish workflow accepts `vX.Y.Z` tags with no leading zeros or prerelease suffixes.
+It verifies that the tagged commit belongs to `main`, then calls the Verify workflow.
+Tests use the locked snapshot workspace; isolated BOM publication and consumption use the tag's version.
+Quality checks, compiler fixtures, library tests, BOM consumption, host integration tests, and Workers deployment dry runs
+must all succeed before a separate job signs and publishes the libraries and BOM to Maven Central.
+GitHub Release creation runs after publication with its own `contents: write` permission.
+The verification jobs do not receive publishing secrets.
+
+The Central Portal account must have publishing access to `dev.koyane`.
+If the namespace is unregistered, verify ownership of `koyane.dev` using the
+[Sonatype namespace procedure](https://central.sonatype.org/register/namespace/).
+Distribute the signing key's public key as described in the
+[Central signing requirements](https://central.sonatype.org/publish/requirements/gpg/).
+Configure these repository secrets before releasing:
+
+| Secret | Value |
+| --- | --- |
+| `MAVEN_CENTRAL_USERNAME` | Central Portal publishing token username |
+| `MAVEN_CENTRAL_PASSWORD` | Central Portal publishing token password |
+| `SIGNING_KEY` | ASCII-armored private signing key |
+| `SIGNING_PASSWORD` | Signing key passphrase |
+
+Create a release from a clean worktree whose `HEAD` exactly matches `origin/main`:
+
+```sh
+mise run release 0.1.0
+```
+
+The command checks the version, fetches `main` and tags, rejects an existing version tag,
+and requires the main Verify workflow to have succeeded for that exact commit.
+It creates and pushes an annotated tag only; builds and publishing run in CI.
+The worktree may remain on a `feature/*` or `hotfix/*` branch.
+
+Central publication and artifact download availability are separate stages;
+[propagation can take time](https://vanniktech.github.io/gradle-maven-publish-plugin/central/#publishing-releases).
+Confirm that the released BOM and target artifacts can be downloaded from Maven Central before announcing availability.
+If publication succeeded and only GitHub Release creation failed, rerun that job without republishing the same version.
 
 ## Dependency updates
 

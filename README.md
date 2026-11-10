@@ -18,7 +18,7 @@
     <img src="https://img.shields.io/badge/Kotlin-Wasm-7F52FF?logo=kotlin&amp;logoColor=white" alt="Kotlin/Wasm">
   </a>
   <a href="https://gradle.org/">
-    <img src="https://img.shields.io/badge/Gradle-9.8.2-02303A?logo=gradle&amp;logoColor=white" alt="Gradle 9.8.2">
+    <img src="https://img.shields.io/badge/Gradle-9.9.0-02303A?logo=gradle&amp;logoColor=white" alt="Gradle 9.9.0">
   </a>
   <a href="https://openjdk.org/">
     <img src="https://img.shields.io/badge/JDK-17-007396?logo=openjdk&amp;logoColor=white" alt="JDK 17">
@@ -101,7 +101,7 @@ Import the BOM and add the modules used by your application without individual v
 The BOM does not add libraries or install plugins automatically.
 
 These snapshot coordinates require [local Maven publication](CONTRIBUTING.md#maven-publications).
-This build does not configure a remote Maven repository for publication.
+For a released version, use `mavenCentral()` and that release's BOM version.
 The snippet below belongs in a Kotlin Multiplatform build targeting `js`, `wasmJs`, or both.
 
 ```kotlin

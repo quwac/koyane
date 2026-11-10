@@ -89,6 +89,7 @@ run = "bun examples/hello-workers/scripts/test-workers.mjs js"
 [tasks.test]
 description = "Run all local Kotlin, compiler, publication, and HTTP adapter tests in order"
 run = [
+    { task = "test:release" },
     { task = "test:kotlin" },
     { task = "test:compile" },
     { task = "test:bom" },
@@ -102,6 +103,15 @@ run = [
 [tasks."test:bom"]
 description = "Publish to an isolated Maven repository and compile JS/Wasm BOM consumers"
 run = "bun scripts/test-bom.mjs"
+
+[tasks.release]
+description = "Create and push a release tag for the verified origin/main commit"
+usage = 'arg "<version>" help="Release version in v1.0.0 or 1.0.0 format"'
+run = 'bash scripts/release.sh "$usage_version"'
+
+[tasks."test:release"]
+description = "Check release guards and tag-only pushes against temporary local repositories"
+run = "bun scripts/test-release.mjs"
 
 [tasks."build:lambda-web:js"]
 description = "Build the Kotlin/JS Lambda Web Functions package"

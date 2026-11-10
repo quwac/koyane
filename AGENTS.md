@@ -45,6 +45,10 @@ example owns AWS listen-address configuration and deployment packaging.
 - `koyane-core`: typed plugin configuration, installation, and extension lookup.
 - `koyane-bom`: Maven BOM and Gradle platform aligning all public library module versions without adding runtime dependencies.
 - `koyane-http`: HTTP messages, named routes, typed input extraction, response builders, and handlers.
+- `koyane-content-negotiation`: explicit typed codecs and request/response media-type negotiation.
+- `koyane-kotlinx-serialization`: explicit kotlinx.serialization JSON codecs for Content Negotiation.
+- `koyane-kotlinx-datetime`: date/time HTTP input extraction with runtime validation.
+- `koyane-testing`: isolated application tests and an in-memory HTTP client.
 - `koyane-bearer-authentication`: optional HTTP Bearer authentication through the public Core and HTTP APIs.
 - `koyane-cors`: optional CORS policy, preflight handling, and response sharing through the public HTTP API.
 - `koyane-error-handling`: optional exception and HTTP failure conversion through the public HTTP lifecycle.
