@@ -43,6 +43,9 @@ kagiroiSourceDir=/absolute/path/to/kagiroi
 Gradle substitutes Kagiroi's Maven dependencies with the included build in CLI builds and IDE imports.
 No publishing or uploading is needed.
 The `-PkagiroiSourceDir=...` Gradle property overrides this file.
+The Kotlin and Workers CI jobs check out the immutable Kagiroi revision declared in `.github/workflows/ci.yml`
+and select it with `ORG_GRADLE_PROJECT_kagiroiSourceDir`, so example checks do not depend on local settings.
+Kagiroi stays an example dependency; Koyane's published library modules do not depend on it.
 Without either setting, Gradle resolves the `kagiroiVersion` Maven coordinates from `gradle.properties`;
 the selected publication must contain the common D1 API.
 
