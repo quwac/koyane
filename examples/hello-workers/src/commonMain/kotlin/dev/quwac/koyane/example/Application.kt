@@ -52,7 +52,7 @@ data class CreateUserRequest(val name: String)
 data class CreateUserResponse(val id: String, val name: String)
 
 /**
- * Builds the Workers example using [database] for user lookup and Todo persistence.
+ * Builds the Cloudflare Workers example using [database] for user lookup and Todo persistence.
  * [verifyToken] supplies principals to protected routes; the default rejects all tokens.
  */
 fun createApplication(

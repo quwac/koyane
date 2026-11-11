@@ -12,6 +12,7 @@ val publishedProjects = setOf(
     ":koyane-bom",
     ":koyane-content-negotiation",
     ":koyane-core",
+    ":koyane-runtime",
     ":koyane-cors",
     ":koyane-error-handling",
     ":koyane-fetch",
@@ -22,7 +23,7 @@ val publishedProjects = setOf(
     ":koyane-logging",
     ":koyane-node",
     ":koyane-testing",
-    ":koyane-workers",
+    ":koyane-cloudflare-workers",
 )
 
 allprojects {

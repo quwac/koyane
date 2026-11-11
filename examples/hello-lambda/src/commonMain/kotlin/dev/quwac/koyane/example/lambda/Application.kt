@@ -6,6 +6,7 @@ import dev.quwac.koyane.errorhandling.ErrorHandling
 import dev.quwac.koyane.http.Http
 import dev.quwac.koyane.http.HttpResponse
 import dev.quwac.koyane.http.HttpStatus
+import dev.quwac.koyane.lambda.awsLambdaFunction
 import kotlinx.coroutines.delay
 
 private const val RESPONSE_DELAY_MS = 10L
@@ -37,4 +38,6 @@ fun createApplication(): Application = koyane {
 }
 
 /** Executable entry point; the host invokes the exported HTTP function for requests. */
-fun main() = Unit
+fun main() {
+    awsLambdaFunction { createApplication() }
+}

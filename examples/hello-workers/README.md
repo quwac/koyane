@@ -4,8 +4,8 @@ This example builds the same Koyane application for Kotlin/JS and Kotlin/Wasm.
 It includes named routes, typed inputs, JSON, CORS, Bearer authentication, and D1 CRUD through Kagiroi.
 
 The application is in [Application.kt](src/commonMain/kotlin/dev/quwac/koyane/example/Application.kt).
-Each target's `main` function calls `defineWorker<ExampleEnvironment>` and constructs the D1 driver.
-Routes and repositories remain in `commonMain`.
+The [common entry point](src/commonMain/kotlin/dev/quwac/koyane/example/Main.kt) registers `cloudflareWorker` and constructs the D1 driver.
+Application setup, routes, and repositories are in `commonMain`.
 
 Run commands from the repository root.
 
@@ -20,6 +20,8 @@ mise run deps
 Gradle compiles Kotlin.
 Bun installs the root and example dependencies.
 Wrangler runs through Node.js.
+The configured Kagiroi Maven release does not contain the common D1 API; configure a
+[local Kagiroi checkout](../../CONTRIBUTING.md#local-kagiroi-development) before building.
 
 For repository checks and Git hooks, follow the [contributing guide](../../CONTRIBUTING.md).
 
@@ -56,11 +58,14 @@ Every `receive` and `respond` call supplies an explicit serializer.
 
 ## D1 and Kagiroi
 
-The JavaScript entry point passes the full Worker environment to `koyane-workers`.
-The example declares its `DB` binding in each target's `ExampleEnvironment` and creates a Kagiroi `D1Database`.
+The JavaScript entry point passes the full Cloudflare Worker environment to `koyane-cloudflare-workers`.
+The common entry point reads `DB` with `environment.get("DB", ::D1Binding)` and creates a request-owned Kagiroi `D1Database`.
+The database closes after request handling, including on failure.
 The example receives it as `SqlDatabase` and keeps repository code in common Kotlin.
-Database selection and driver construction belong to the example; `koyane-workers` has no database dependency.
-Kagiroi is a published dependency; its source modules are not part of this repository.
+Database selection and driver construction belong to the example; `koyane-cloudflare-workers` has no database dependency.
+Kagiroi is an external dependency; its source modules are not part of this repository.
+For local development against its common D1 API, configure the Kagiroi source checkout as described in the
+[contributing guide](../../CONTRIBUTING.md#local-kagiroi-development).
 
 The [`migrations`](migrations) directory contains the local D1 schema.
 It seeds user `1` as `Ada` for the `/users/1` route.
@@ -115,7 +120,7 @@ mise run deploy:wasm
 mise run deploy:js
 ```
 
-Both Worker configurations bind `DB` to the `koyane-hello` D1 database.
+Both Cloudflare Worker configurations bind `DB` to the `koyane-hello` D1 database.
 Apply the remote schema after the database exists:
 
 ```sh

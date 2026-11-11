@@ -19,6 +19,9 @@ kotlin {
         commonMain {
             kotlin.srcDirs("contracts", "fixtures/$fixture")
             dependencies {
+                implementation(project(":koyane-cloudflare-workers"))
+                implementation(project(":koyane-node"))
+                implementation(project(":koyane-lambda"))
                 implementation(project(":koyane-bearer-authentication"))
                 implementation(project(":koyane-content-negotiation"))
                 implementation(project(":koyane-cors"))

@@ -6,11 +6,14 @@ import dev.quwac.koyane.core.Application
 import dev.quwac.koyane.http.Http
 import dev.quwac.koyane.http.HttpRequest
 import dev.quwac.koyane.http.HttpResponse
-import kotlin.coroutines.Continuation
+import dev.quwac.koyane.runtime.nativePromise
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.await
+import kotlinx.coroutines.launch
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.startCoroutine
 import kotlin.coroutines.suspendCoroutine
 import kotlin.js.JsAny
 import kotlin.js.JsModule
@@ -70,13 +73,15 @@ private external interface NativeServer : JsAny {
 class NodeAdapter(application: Application) {
     private val http = application[Http]
 
-    /**
-     * Handles a native request with [body] already read by the host as the original UTF-8 text.
-     * Resolves after handling completes. Unhandled failures are logged and send a 500 response, or destroy
-     * a response whose headers were already sent. HEAD responses omit the body.
-     */
-    fun handle(request: NodeRequest, response: NodeResponse, body: String): Promise<JsAny?> = Promise { resolve, _ ->
-        handleRequest(request, response, http::handle, body) { resolve(null) }
+    /** Handles original UTF-8 [body] text and resolves after ending the native response. */
+    fun handle(request: NodeRequest, response: NodeResponse, body: String): Promise<JsAny?> = nativePromise {
+        handleRequest(request, response, body)
+        null
+    }
+
+    /** Handles the request in the caller's coroutine; failures send 500, and cancellation also propagates. */
+    suspend fun handleRequest(request: NodeRequest, response: NodeResponse, body: String) {
+        processRequest(request, response, http::handle, body)
     }
 }
 
@@ -116,15 +121,25 @@ private fun handleRequest(
     request: NodeRequest,
     response: NodeResponse,
     handler: suspend (HttpRequest) -> HttpResponse,
-    body: String? = null,
-    complete: () -> Unit = {},
 ) {
-    val operation: suspend () -> Unit = {
+    CoroutineScope(EmptyCoroutineContext).launch {
+        processRequest(request, response, handler, null)
+    }
+}
+
+@Suppress("TooGenericExceptionCaught")
+private suspend fun processRequest(
+    request: NodeRequest,
+    response: NodeResponse,
+    handler: suspend (HttpRequest) -> HttpResponse,
+    body: String?,
+) {
+    try {
         val input = HttpRequest(
             method = request.method ?: "GET",
             url = request.url ?: "/",
             headers = requestHeaders(request),
-            body = body ?: readBody(request).awaitText(),
+            body = body ?: readBody(request).await().toString(),
         )
         val output = handler(input)
         if (!response.destroyed) {
@@ -132,18 +147,11 @@ private fun handleRequest(
             output.headers.forEach { (name, value) -> response.setHeader(name, value) }
             response.end(if (input.method == "HEAD") "" else output.body)
         }
+    } catch (error: Throwable) {
+        println("Node HTTP request failed: $error")
+        sendFailure(response)
+        if (error is CancellationException) throw error
     }
-    operation.startCoroutine(object : Continuation<Unit> {
-        override val context = EmptyCoroutineContext
-
-        override fun resumeWith(result: Result<Unit>) {
-            result.exceptionOrNull()?.let { error ->
-                println("Node HTTP request failed: $error")
-                sendFailure(response)
-            }
-            complete()
-        }
-    })
 }
 
 private fun requestHeaders(request: NodeRequest): Map<String, String> {
@@ -155,16 +163,6 @@ private fun requestHeaders(request: NodeRequest): Map<String, String> {
         headers[name] = headers[name]?.let { "$it$separator$value" } ?: value
     }
     return headers
-}
-
-private suspend fun Promise<JsString>.awaitText(): String = suspendCoroutine { continuation ->
-    then { value ->
-        continuation.resume(value.toString())
-        value
-    }.catch { error ->
-        continuation.resumeWithException(IllegalStateException(error.toString()))
-        null
-    }
 }
 
 @Suppress("UnusedParameter") // Parameters are referenced by the embedded JavaScript.

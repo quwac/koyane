@@ -5,9 +5,7 @@ package dev.quwac.koyane.lambda
 import dev.quwac.koyane.core.Application
 import dev.quwac.koyane.http.Http
 import dev.quwac.koyane.http.HttpResponse
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
+import dev.quwac.koyane.runtime.nativePromise
 import kotlin.js.JsAny
 import kotlin.js.Promise
 
@@ -75,31 +73,25 @@ class LambdaAdapter(private val application: Application) {
     }
 
     /** Rejects unsupported event formats and failed HTTP invocations. */
-    fun handle(event: LambdaHttpEvent): Promise<LambdaHttpResponse> = Promise { resolve, reject ->
-        val operation: suspend () -> LambdaHttpResponse = {
-            require(event.version == "2.0") { "Expected Lambda HTTP payload version 2.0" }
-            val method = requireNotNull(event.requestContext?.http?.method) { "Expected an HTTP method" }
-            val path = requireNotNull(event.rawPath) { "Expected rawPath" }
-            require(path.startsWith("/")) { "Expected an absolute HTTP path" }
-            val headers = eventHeaders(event)
-            application.handleLambdaInput(
-                LambdaInput(
-                    method = method,
-                    path = path,
-                    query = event.rawQueryString.orEmpty(),
-                    headers = headers,
-                    body = event.body,
-                    base64Encoded = event.isBase64Encoded == true,
-                ),
-            ).toLambdaResponse()
-        }
-        operation.startCoroutine(object : Continuation<LambdaHttpResponse> {
-            override val context = EmptyCoroutineContext
+    fun handle(event: LambdaHttpEvent): Promise<LambdaHttpResponse> = nativePromise { handleEvent(event) }
 
-            override fun resumeWith(result: Result<LambdaHttpResponse>) {
-                result.fold(resolve) { error -> reject(jsError(error.toString())) }
-            }
-        })
+    /** Handles the native event in the caller's coroutine, preserving its cancellation and resource scope. */
+    suspend fun handleEvent(event: LambdaHttpEvent): LambdaHttpResponse {
+        require(event.version == "2.0") { "Expected Lambda HTTP payload version 2.0" }
+        val method = requireNotNull(event.requestContext?.http?.method) { "Expected an HTTP method" }
+        val path = requireNotNull(event.rawPath) { "Expected rawPath" }
+        require(path.startsWith("/")) { "Expected an absolute HTTP path" }
+        val headers = eventHeaders(event)
+        return application.handleLambdaInput(
+            LambdaInput(
+                method = method,
+                path = path,
+                query = event.rawQueryString.orEmpty(),
+                headers = headers,
+                body = event.body,
+                base64Encoded = event.isBase64Encoded == true,
+            ),
+        ).toLambdaResponse()
     }
 }
 
@@ -156,6 +148,3 @@ private fun setHeader(output: LambdaHttpResponse, name: String, value: String): 
 
 @Suppress("UnusedParameter")
 private fun appendCookie(output: LambdaHttpResponse, value: String): Unit = js("{ output.cookies.push(value); }")
-
-@Suppress("UnusedParameter")
-private fun jsError(message: String): JsAny = js("new Error(message)")

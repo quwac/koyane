@@ -37,3 +37,5 @@ mise.local.toml
 
 !gradle/wrapper/gradle-wrapper.jar
 .rumdl_cache/
+
+gradle.local.properties

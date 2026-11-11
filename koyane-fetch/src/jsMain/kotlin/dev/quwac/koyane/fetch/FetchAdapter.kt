@@ -3,12 +3,8 @@
 package dev.quwac.koyane.fetch
 
 import dev.quwac.koyane.core.Application
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.startCoroutine
-import kotlin.coroutines.suspendCoroutine
+import dev.quwac.koyane.runtime.nativePromise
+import kotlinx.coroutines.await
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.Promise
 
@@ -50,32 +46,16 @@ private external class Headers {
 /** Bridges native Fetch requests and responses to an application with HTTP installed, buffering bodies as text. */
 class FetchAdapter(private val application: Application) {
     /** Consumes [request] and resolves a native response; body-read, HTTP, and response-construction failures reject. */
-    fun handle(request: FetchRequest): Promise<FetchResponse> = Promise { resolve, reject ->
-        val operation: suspend () -> FetchResponse = {
-            val headers = mutableMapOf<String, String>()
-            request.headers.forEach { value, name -> headers[name] = value }
-            val output = application.handleFetchInput(
-                FetchInput(request.method, request.url, headers, request.text().awaitText()),
-            )
-            output.toFetchResponse()
-        }
-        operation.startCoroutine(object : Continuation<FetchResponse> {
-            override val context = EmptyCoroutineContext
+    fun handle(request: FetchRequest): Promise<FetchResponse> = nativePromise { handleRequest(request) }
 
-            override fun resumeWith(result: Result<FetchResponse>) {
-                result.fold(resolve) { error -> reject(jsError(error.toString())) }
-            }
-        })
-    }
-}
-
-private suspend fun Promise<String>.awaitText(): String = suspendCoroutine { continuation ->
-    then { value ->
-        continuation.resume(value)
-        value
-    }.catch { error ->
-        continuation.resumeWithException(IllegalStateException(error.toString()))
-        null
+    /** Converts and handles a native request in the caller's coroutine, preserving its cancellation and resource scope. */
+    suspend fun handleRequest(request: FetchRequest): FetchResponse {
+        val headers = mutableMapOf<String, String>()
+        request.headers.forEach { value, name -> headers[name] = value }
+        val output = application.handleFetchInput(
+            FetchInput(request.method, request.url, headers, request.text().await()),
+        )
+        return output.toFetchResponse()
     }
 }
 
@@ -89,6 +69,3 @@ private fun FetchOutput.toFetchResponse(): FetchResponse {
 @Suppress("UnusedParameter")
 private fun createResponse(status: Int, body: String?, headers: Headers): FetchResponse =
     js("new Response(body, { status, headers })")
-
-@Suppress("UnusedParameter")
-private fun jsError(message: String): Throwable = js("new Error(message)")

@@ -47,7 +47,7 @@ Application code uses the same runtime-independent Core and HTTP APIs on every h
 
 | Service | Runtime used by Koyane | Module | Example |
 | --- | --- | --- | --- |
-| <img src="https://raw.githubusercontent.com/gilbarbara/logos/22f03ffc4a652309d1fea4ade70f46e9e1d6602c/logos/cloudflare-workers-icon.svg" width="20" height="20" alt=""> [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Workers runtime | `koyane-workers` | [Workers](examples/hello-workers/README.md) |
+| <img src="https://raw.githubusercontent.com/gilbarbara/logos/22f03ffc4a652309d1fea4ade70f46e9e1d6602c/logos/cloudflare-workers-icon.svg" width="20" height="20" alt=""> [Cloudflare Workers](https://developers.cloudflare.com/workers/) | Cloudflare Workers runtime | `koyane-cloudflare-workers` | [Cloudflare Workers](examples/hello-workers/README.md) |
 | <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/lambda.png" width="20" height="20" alt=""> [AWS Lambda Event Functions](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html) | Node.js | `koyane-lambda` | [Lambda HTTP events](examples/hello-lambda/README.md) |
 | <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/aws/compute/lambda.png" width="20" height="20" alt=""> [AWS Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html) | Node.js | `koyane-node` | [Lambda HTTP server](examples/hello-lambda-web/README.md) |
 | <img src="https://raw.githubusercontent.com/mingrammer/diagrams/5a9e8af2d4e48ae2bbd002a4c0ca714d5b9219e1/resources/gcp/compute/functions.png" width="20" height="20" alt=""> [Google Cloud Run functions](https://docs.cloud.google.com/run/docs/write-functions) | Node.js | `koyane-node` | [Cloud Run functions](examples/hello-cloud-run-functions/README.md) |
@@ -114,7 +114,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project.dependencies.platform("dev.quwac.koyane:koyane-bom:0.0.1-SNAPSHOT"))
-            implementation("dev.quwac.koyane:koyane-workers") // Choose the module for your service above.
+            implementation("dev.quwac.koyane:koyane-cloudflare-workers") // Choose the module for your service above.
             // implementation("dev.quwac.koyane:koyane-logging")
         }
     }

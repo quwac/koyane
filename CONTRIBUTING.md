@@ -31,6 +31,21 @@ mise run setup
 Run commands through `mise run` or from a mise-activated shell.
 Without activation, run quality commands as `mise exec -- hk check --all`.
 
+## Local Kagiroi development
+
+The Workers example requires Kagiroi's common `D1Binding` API, which is not in the configured Maven release.
+Set `kagiroiSourceDir` to a local Kagiroi checkout containing this API in the Git-ignored `gradle.local.properties`:
+
+```properties
+kagiroiSourceDir=/absolute/path/to/kagiroi
+```
+
+Gradle substitutes Kagiroi's Maven dependencies with the included build in CLI builds and IDE imports.
+No publishing or uploading is needed.
+The `-PkagiroiSourceDir=...` Gradle property overrides this file.
+Without either setting, Gradle resolves the `kagiroiVersion` Maven coordinates from `gradle.properties`;
+the selected publication must contain the common D1 API.
+
 ## Checks
 
 ```sh
@@ -47,6 +62,7 @@ mise run test
 | `mise run test:release` | Release guards and tag-only pushes against temporary local Git repositories |
 | `mise run test:workers:wasm` | Kotlin/Wasm Worker integration test |
 | `mise run test:workers:js` | Kotlin/JS Worker integration test |
+| `mise run test:workers:request` | Common Workers factory, environment, request resources, and deployment dry runs on JS/Wasm |
 | `mise run test:node` | Kotlin/JS and Kotlin/Wasm Node HTTP integration tests |
 | `mise run test:functions:node` | JS/Wasm Vercel Fetch contract, Lambda HTTP events, and official Functions Framework |
 | `mise run test:functions:edge` | JS/Wasm Supabase Edge Runtime user workers (Docker required) |
