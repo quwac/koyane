@@ -47,18 +47,9 @@ jobs:
   kotlin-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      ORG_GRADLE_PROJECT_kagiroiSourceDir: ${{ github.workspace }}/build/ci-dependencies/kagiroi
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: false
-      - name: Check out Kagiroi common driver APIs
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: quwac/kagiroi
-          ref: 9afee37b997c6c42f882f6a52799371a78f1212d
-          path: build/ci-dependencies/kagiroi
           persist-credentials: false
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
@@ -100,18 +91,9 @@ jobs:
   workers:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      ORG_GRADLE_PROJECT_kagiroiSourceDir: ${{ github.workspace }}/build/ci-dependencies/kagiroi
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: false
-      - name: Check out Kagiroi common driver APIs
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: quwac/kagiroi
-          ref: 9afee37b997c6c42f882f6a52799371a78f1212d
-          path: build/ci-dependencies/kagiroi
           persist-credentials: false
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
