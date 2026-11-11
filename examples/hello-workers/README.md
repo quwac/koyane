@@ -20,8 +20,7 @@ mise run deps
 Gradle compiles Kotlin.
 Bun installs the root and example dependencies.
 Wrangler runs through Node.js.
-The configured Kagiroi Maven release does not contain the common D1 API; configure a
-[local Kagiroi checkout](../../CONTRIBUTING.md#local-kagiroi-development) before building.
+Gradle resolves Kagiroi from Maven Central using `kagiroiVersion` in `gradle.properties`.
 
 For repository checks and Git hooks, follow the [contributing guide](../../CONTRIBUTING.md).
 
@@ -64,7 +63,7 @@ The database closes after request handling, including on failure.
 The example receives it as `SqlDatabase` and keeps repository code in common Kotlin.
 Database selection and driver construction belong to the example; `koyane-cloudflare-workers` has no database dependency.
 Kagiroi is an external dependency; its source modules are not part of this repository.
-For local development against its common D1 API, configure the Kagiroi source checkout as described in the
+To test local Kagiroi driver changes, use the optional source checkout described in the
 [contributing guide](../../CONTRIBUTING.md#local-kagiroi-development).
 
 The [`migrations`](migrations) directory contains the local D1 schema.
