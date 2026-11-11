@@ -25,7 +25,11 @@ assert.equal(selected.status, 0, selected.stderr);
 for (const file of new Set(selected.stdout.split("\0").filter(Boolean))) {
   const destination = path.join(root, file);
   await mkdir(path.dirname(destination), { recursive: true });
-  await cp(path.join(repositoryRoot, file), destination);
+  try {
+    await cp(path.join(repositoryRoot, file), destination);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
 }
 
 async function gradle(label, args) {

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 pluginManagement {
     repositories {
         google()
@@ -17,6 +19,7 @@ rootProject.name = "koyane"
 include(
     ":koyane-bom",
     ":koyane-core",
+    ":koyane-runtime",
     ":koyane-http",
     ":koyane-content-negotiation",
     ":koyane-bearer-authentication",
@@ -26,7 +29,7 @@ include(
     ":koyane-kotlinx-serialization",
     ":koyane-logging",
     ":koyane-testing",
-    ":koyane-workers",
+    ":koyane-cloudflare-workers",
     ":koyane-node",
     ":koyane-fetch",
     ":koyane-lambda",
@@ -40,3 +43,12 @@ include(
 if (providers.gradleProperty("compileFixture").isPresent) {
     include(":compile-tests")
 }
+
+val localProperties = Properties().apply {
+    providers.fileContents(layout.settingsDirectory.file("gradle.local.properties")).asText.orNull?.let {
+        load(it.reader())
+    }
+}
+val kagiroiSourceDir = providers.gradleProperty("kagiroiSourceDir").orNull
+    ?: localProperties.getProperty("kagiroiSourceDir")
+kagiroiSourceDir?.let { includeBuild(it) }

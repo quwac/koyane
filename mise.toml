@@ -95,6 +95,7 @@ run = [
     { task = "test:bom" },
     { task = "test:workers:wasm" },
     { task = "test:workers:js" },
+    { task = "test:workers:request" },
     { task = "test:node" },
     { task = "test:functions:node" },
     { task = "test:functions:edge" },
@@ -232,3 +233,8 @@ run = [
     "node scripts/test-functions.mjs js supabase",
     "node scripts/test-functions.mjs wasm supabase",
 ]
+
+[tasks."test:workers:request"]
+description = "Test common request-owned Workers on JS and Wasm, including deployment dry runs"
+depends = ["deps"]
+run = "bun examples/hello-workers/scripts/test-request-workers.mjs"

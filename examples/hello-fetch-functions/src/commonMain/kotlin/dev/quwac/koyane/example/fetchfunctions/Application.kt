@@ -3,6 +3,7 @@ package dev.quwac.koyane.example.fetchfunctions
 import dev.quwac.koyane.core.Application
 import dev.quwac.koyane.core.koyane
 import dev.quwac.koyane.errorhandling.ErrorHandling
+import dev.quwac.koyane.fetch.fetchFunction
 import dev.quwac.koyane.http.Http
 import dev.quwac.koyane.http.HttpResponse
 import dev.quwac.koyane.http.HttpStatus
@@ -37,4 +38,6 @@ fun createApplication(): Application = koyane {
 }
 
 /** Executable entry point; the host invokes the exported HTTP function for requests. */
-fun main() = Unit
+fun main() {
+    fetchFunction { createApplication() }
+}

@@ -34,15 +34,18 @@
 
 Core, HTTP, authentication, CORS, error handling, and Logging provide
 runtime-independent APIs targeting Kotlin `js` and `wasmJs`.
-`koyane-fetch` provides the shared native Fetch adapter; `koyane-workers` provides Cloudflare registration. JVM, WASI, Native,
+`koyane-fetch` provides the shared native Fetch adapter;
+`koyane-cloudflare-workers` provides Cloudflare registration. JVM, WASI, Native,
 GraphQL, gRPC, OpenAPI, client generation, and compiler plugins are outside this
-version's scope. The Workers adapter is independent of databases and drivers.
-The example constructs Kagiroi's D1 driver from its typed host environment in
-the target source sets and passes it to common application code.
+version's scope. The Cloudflare Workers adapter is independent of databases and drivers.
+The example constructs Kagiroi's D1 driver from its host environment in
+`commonMain` and passes it to repository code.
 `koyane-node` serves HTTP through Node.js on both targets. The Lambda Web Functions
 example owns AWS listen-address configuration and deployment packaging.
 
 - `koyane-core`: typed plugin configuration, installation, and extension lookup.
+- `koyane-runtime`: common host environments and resource lifetimes, plus native object views for adapters;
+  no HTTP or database dependency.
 - `koyane-bom`: Maven BOM and Gradle platform aligning all public library module versions without adding runtime dependencies.
 - `koyane-http`: HTTP messages, named routes, typed input extraction, response builders, and handlers.
 - `koyane-content-negotiation`: explicit typed codecs and request/response media-type negotiation.
@@ -53,11 +56,11 @@ example owns AWS listen-address configuration and deployment packaging.
 - `koyane-cors`: optional CORS policy, preflight handling, and response sharing through the public HTTP API.
 - `koyane-error-handling`: optional exception and HTTP failure conversion through the public HTTP lifecycle.
 - `koyane-logging`: optional HTTP lifecycle logging through the public Core and HTTP APIs.
-- `koyane-workers`: Wasm/JavaScript and Fetch API adapter.
+- `koyane-cloudflare-workers`: Wasm/JavaScript and Fetch API adapter.
 - `koyane-node`: Node.js HTTP server and native function request/response adapter with buffered text bodies.
 - `koyane-fetch`: native Fetch request/response adapter for JS and Wasm hosts.
 - `koyane-lambda`: API Gateway HTTP API and Function URL payload 2.0 adapter.
-- `examples/hello-workers`: example application, Workers packaging, and integration tests.
+- `examples/hello-workers`: example application, Cloudflare Workers packaging, and integration tests.
 - `examples/hello-fetch-functions`: shared Vercel Node.js and Supabase Edge Functions application and packages.
 - `examples/hello-cloud-run-functions`: HTTP Functions Framework application and packages.
 - `examples/hello-lambda`: Lambda HTTP event application and packages.
@@ -65,7 +68,7 @@ example owns AWS listen-address configuration and deployment packaging.
 - `compile-tests`: positive and deliberately invalid Kotlin/Wasm compiler fixtures.
 
 JDK runs Gradle, the Kotlin compiler, and detekt. It is a build requirement. The
-Kotlin/JS Worker contains JavaScript; the Kotlin/Wasm Worker contains JavaScript
+Kotlin/JS Cloudflare Worker contains JavaScript; the Kotlin/Wasm Cloudflare Worker contains JavaScript
 and Wasm. Bun runs repository scripts and dependency installation. Node.js runs
 Wrangler; Gradle manages the Node.js runners for Kotlin/JS and Kotlin/Wasm tests.
 
@@ -98,7 +101,7 @@ formatting; those checks belong in `hk.pkl`.
 
 Run checks appropriate to the change. Changes to response contracts, typed paths,
 or plugin/input types require the actual compiler fixtures (`mise run test:compile`),
-including expected diagnostic checks for negative cases. Changes to the Workers
+including expected diagnostic checks for negative cases. Changes to the Cloudflare Workers
 bridge or Kotlin compiler version require local workerd integration tests and a
 deployment dry run. Local checks do not establish successful remote deployment.
 

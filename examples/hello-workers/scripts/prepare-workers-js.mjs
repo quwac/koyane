@@ -18,7 +18,7 @@ await writeFile(
   path.join(target, "bridge.mjs"),
   `
 import "./kotlin/koyane-examples-hello-workers.mjs";
-export { fetch } from "./kotlin/koyane-koyane-workers.mjs";
+export { fetch } from "./kotlin/koyane-koyane-cloudflare-workers.mjs";
 `,
 );
 

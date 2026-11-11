@@ -36,10 +36,18 @@ async function write(host, name, content) {
   await writeFile(destination, content);
 }
 const fetchModule = "koyane-examples-hello-fetch-functions";
+const fetchAdapterModule = target === "js" ? "koyane-koyane-fetch" : fetchModule;
+const nodeAdapterModule =
+  target === "js" ? "koyane-koyane-node" : "koyane-examples-hello-cloud-run-functions";
+const lambdaAdapterModule =
+  target === "js" ? "koyane-koyane-lambda" : "koyane-examples-hello-lambda";
 await write(
   "vercel",
   "api/index.mjs",
-  `import { fetch } from "../kotlin/${fetchModule}.mjs";\nexport default { fetch };\n`,
+  `import "../kotlin/${fetchModule}.mjs";
+import { handleFetchRequest } from "../kotlin/${fetchAdapterModule}.mjs";
+export default { fetch: (request) => handleFetchRequest(request, process.env) };
+`,
 );
 await write(
   "vercel",
@@ -61,7 +69,7 @@ await write(
 );
 // Supabase packages the Wasm bytes as static files. Its user worker reads these
 // locally; Kotlin's default browser loader would try to fetch a file: URL.
-const supabaseImport = target === "js" ? `${fetchModule}.mjs` : "bridge.mjs";
+const supabaseImport = target === "js" ? `${fetchAdapterModule}.mjs` : "bridge.mjs";
 if (target === "wasm") {
   await write(
     "supabase",
@@ -72,7 +80,7 @@ const bytes = await Deno.readFile(new URL("./${fetchModule}.wasm", import.meta.u
 const { instance } = await WebAssembly.instantiate(bytes, importObject);
 setWasmExports({ memory: importObject.intrinsics.memory });
 instance.exports._start();
-export const fetch = instance.exports.fetch;
+export const handleFetchRequest = instance.exports.handleFetchRequest;
 `,
   );
 }
@@ -80,12 +88,13 @@ await write(
   "supabase",
   "supabase/functions/hello/index.ts",
   `
-import { fetch } from "./kotlin/${supabaseImport}";
+${target === "js" ? `import "./kotlin/${fetchModule}.mjs";` : ""}
+import { handleFetchRequest } from "./kotlin/${supabaseImport}";
 Deno.serve((request: Request) => {
   // Hosted requests include /hello before the application's route.
   const url = new URL(request.url);
   url.pathname = url.pathname.replace(/^\\/hello(?=\\/|$)/, "") || "/";
-  return fetch(new Request(url, request));
+  return handleFetchRequest(new Request(url, request), Deno.env.toObject());
 });
 `,
 );
@@ -98,7 +107,10 @@ await write(
 await write(
   "lambda",
   "index.mjs",
-  'export { handler } from "./kotlin/koyane-examples-hello-lambda.mjs";\n',
+  `import "./kotlin/koyane-examples-hello-lambda.mjs";
+import { handleLambdaEvent } from "./kotlin/${lambdaAdapterModule}.mjs";
+export const handler = (event) => handleLambdaEvent(event, process.env);
+`,
 );
 await write(
   "lambda",
@@ -110,8 +122,9 @@ await write(
   "index.js",
   `
 import { http } from "@google-cloud/functions-framework";
-import { handle } from "./kotlin/koyane-examples-hello-cloud-run-functions.mjs";
-http("hello", (request, response) => handle(request, response, request.rawBody?.toString("utf8") ?? ""));
+import "./kotlin/koyane-examples-hello-cloud-run-functions.mjs";
+import { handleNodeRequest } from "./kotlin/${nodeAdapterModule}.mjs";
+http("hello", (request, response) => handleNodeRequest(request, response, request.rawBody?.toString("utf8") ?? "", process.env));
 `,
 );
 await write(

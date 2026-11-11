@@ -9,6 +9,7 @@ The `dev.quwac.koyane:koyane-bom` platform aligns versions; it does not add libr
 | Module | Import package |
 | --- | --- |
 | `koyane-core` | `dev.quwac.koyane.core` |
+| `koyane-runtime` | `dev.quwac.koyane.runtime` (common and target source sets) |
 | `koyane-http` | `dev.quwac.koyane.http` |
 | `koyane-content-negotiation` | `dev.quwac.koyane.contentnegotiation` |
 | `koyane-kotlinx-serialization` | `dev.quwac.koyane.serialization.kotlinx` |
@@ -18,10 +19,10 @@ The `dev.quwac.koyane:koyane-bom` platform aligns versions; it does not add libr
 | `koyane-logging` | `dev.quwac.koyane.logging` |
 | `koyane-kotlinx-datetime` | `dev.quwac.koyane.http` |
 | `koyane-testing` | `dev.quwac.koyane.testing` |
-| `koyane-workers` | `dev.quwac.koyane.workers` (target source set) |
+| `koyane-cloudflare-workers` | `dev.quwac.koyane.cloudflare.workers` (common and target source sets) |
 | `koyane-node` | `dev.quwac.koyane.node` |
-| `koyane-fetch` | `dev.quwac.koyane.fetch` (target source set) |
-| `koyane-lambda` | `dev.quwac.koyane.lambda` (target source set) |
+| `koyane-fetch` | `dev.quwac.koyane.fetch` (common and target source sets) |
+| `koyane-lambda` | `dev.quwac.koyane.lambda` (common and target source sets) |
 
 ## Application and routing
 
@@ -470,46 +471,137 @@ The client supports `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, 
 and `request(HttpMethod, url)`. Each accepts headers, a text body, and a request builder.
 `response.headers` exposes all response headers; `header(name)` matches case-insensitively.
 
+## Host entry points from common code
+
+All host factories accept a shared `Environment` and a resource-owning receiver on JS and Wasm.
+Build the application, read configuration, and acquire dependencies in `commonMain`.
+Native request, response, event, and Promise handling stays in the adapters.
+
+### Service support
+
+| Entry point | Module | Services |
+| --- | --- | --- |
+| `cloudflareWorker { env -> koyane { ... } }` | `koyane-cloudflare-workers` | Cloudflare Workers |
+| `fetchFunction { env -> koyane { ... } }` | `koyane-fetch` | Vercel Functions, Supabase Edge Functions |
+| `nodeFunction { env -> koyane { ... } }` | `koyane-node` | Google Cloud Run functions |
+| `awsLambdaFunction { env -> koyane { ... } }` | `koyane-lambda` | AWS Lambda Event Functions (HTTP payload 2.0) |
+| `nodeServer { env -> koyane { ... } }` | `koyane-node` | AWS Lambda Web Functions, Node.js servers on VMs and containers |
+
+See [Supported services](../README.md#supported-services) for runtime and deployment boundaries.
+
+### Application and resource lifetimes
+
+| Entry point | Application and resource lifetime |
+| --- | --- |
+| `cloudflareWorker { env -> koyane { ... } }` | One request |
+| `fetchFunction { env -> koyane { ... } }` | One Fetch invocation |
+| `nodeFunction { env -> koyane { ... } }` | One native Node invocation |
+| `awsLambdaFunction { env -> koyane { ... } }` | One Lambda HTTP invocation |
+| `nodeServer { env -> koyane { ... } }` | One server, until `close()` finishes |
+
+`Environment.getString(name)` reads a required string.
+`getStringOrNull(name)` returns null for missing or null properties and rejects present values of another type.
+`environment.get(name).getString(property)` reads a required nested object property.
+Invalid values are rejected without including their contents in error messages.
+Native environment objects and handles are viewed without serialization.
+`environment.get(name, convert)` passes a required native object into a library's common typed factory.
+For example, `environment.get("DB", ::D1Binding)` creates a Kagiroi D1 handle without either library depending on the other.
+The conversion boundary uses `Any`; application code receives the factory's typed result.
+
+Factories use `ResourceScope.resource(create, release)` to acquire dependencies.
+Function entry points release resources in reverse acquisition order after buffered response processing,
+including factory, handler, conversion, cancellation, and release failures.
+`nodeServer` retains resources until server shutdown has finished waiting for active requests.
+An operation failure stays primary; release failures are suppressed.
+A failed acquisition releases earlier resources.
+`withResourceScope { ... }` applies the same lifetime to common tests and non-HTTP operations.
+A standalone `ResourceScope` can also be closed explicitly; its resources must not escape their owner's lifetime.
+`close()` waits for pending acquisitions and releases each resource once, even when close calls overlap.
+An acquisition that completes after closing starts registers its resource for release and fails.
+These primitives are in `koyane-runtime`, which depends on Core and coroutines and has no HTTP or database dependency.
+
+Each function entry point accepts one registration per module. Its native export receives
+host values and an environment object; the host's JavaScript wrapper only forwards those values:
+
+| Registration | Native export | Native arguments |
+| --- | --- | --- |
+| `cloudflareWorker` | `fetch` | request, Cloudflare environment |
+| `fetchFunction` | `handleFetchRequest` | request, environment object |
+| `nodeFunction` | `handleNodeRequest` | request, response, original UTF-8 body, environment object |
+| `awsLambdaFunction` | `handleLambdaEvent` | HTTP payload 2.0 event, environment object |
+
+For Node-based functions pass `process.env`; for Supabase Edge Functions pass `Deno.env.toObject()`.
+The standalone Node server obtains `process.env` inside the adapter.
+On JS, import the application's executable module before invoking the native export from its adapter module.
+On Wasm, the linked executable exports the same native function names.
+The [Fetch](../examples/hello-fetch-functions/README.md), [Cloud Run](../examples/hello-cloud-run-functions/README.md),
+and [Lambda](../examples/hello-lambda/README.md) examples include ready-to-run host packages.
+
 ## Cloudflare Workers adapter
 
-`koyane-workers` supplies target-specific `defineWorker` and `WorkersAdapter` APIs for Fetch hosts.
-Keep host environment types in the target source set.
-Declare a typed environment and pass application dependencies explicitly.
-This example works in `jsMain` and `wasmJsMain`:
+`koyane-cloudflare-workers` provides `cloudflareWorker` from `commonMain` on JS and Wasm.
+It creates one application per request and passes a validated `Environment` view.
+Read external strings with `Environment.getString`. Use `Environment.get` to view nested bindings
+and read their string properties with `Environment.getString`.
+Invalid shapes are rejected without including their values in errors.
+The adapter keeps native binding objects in the host; it does not serialize them.
 
 ```kotlin
-@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
-
 import dev.quwac.koyane.core.koyane
 import dev.quwac.koyane.http.Http
-import dev.quwac.koyane.workers.defineWorker
-import kotlin.js.JsAny
-
-external interface WorkerEnvironment : JsAny {
-    val greeting: String
-}
+import dev.quwac.koyane.cloudflare.workers.cloudflareWorker
 
 fun main() {
-    defineWorker<WorkerEnvironment> { environment ->
+    cloudflareWorker { environment ->
+        val greeting = environment.getString("GREETING")
         koyane {
-            install(Http) {
-                get("/hello") { text(environment.greeting) }
-            }
+            install(Http) { get("/hello") { text(greeting) } }
         }
     }
 }
 ```
 
-The adapter initializes the application from the first request environment and reuses it within the Worker isolate.
-The JavaScript Fetch entry point passes the full environment as `fetchKoyane(request, env)`.
-The adapter does not depend on a database or driver.
-Construct any database client supported by the target runtime in the application factory
-and pass it to common application code.
-See the [Workers example](../examples/hello-workers/README.md) for D1 queries, migrations, packaging, and deployment.
+The factory has a `ResourceScope` receiver. Acquire request-owned values inside the factory:
+
+```kotlin
+val client = resource(create = { openClient() }, release = { it.close() })
+```
+
+The adapter releases acquired resources in reverse order after buffered response processing,
+including factory, handler, conversion, cancellation, and release failures.
+A failed acquisition releases earlier acquisitions. An operation failure remains primary;
+release failures are suppressed. `withResourceScope` provides the same lifetime for
+common tests and non-HTTP operations. Do not retain request resources beyond the scope.
+The adapter is independent of databases, HTTP clients, and DI libraries.
+The module accepts one application factory.
+The JavaScript entry point forwards the request and environment to the adapter's native `fetch` export.
+For Wrangler packaging, local execution, and D1 migrations, see the
+[Cloudflare Workers example](../examples/hello-workers/README.md).
 
 ## Node.js HTTP adapter
 
-`koyane-node` supports Kotlin/JS and Kotlin/Wasm with the same common API:
+`koyane-node` supports Kotlin/JS and Kotlin/Wasm with the same common API.
+
+`nodeServer` configures and creates a server from common code:
+
+```kotlin
+import dev.quwac.koyane.core.koyane
+import dev.quwac.koyane.http.Http
+import dev.quwac.koyane.node.nodeServer
+
+suspend fun main() {
+    val server = nodeServer { environment ->
+        port = environment.getStringOrNull("PORT")?.toInt() ?: 3000
+        koyane { install(Http) { get("/hello") { text("Hello") } } }
+    }
+    println("Listening on ${server.host}:${server.port}")
+}
+```
+
+The factory runs once with `NodeServerScope`, which combines `ResourceScope` with mutable `host` and `port`.
+Factory or bind failures release acquired resources. `NodeServer.close` waits for active requests
+and then releases factory resources, including when shutdown is cancelled or fails.
+`Application.listen` remains available when the caller already owns the application and its resources.
 
 ```kotlin
 import dev.quwac.koyane.core.Application
@@ -521,7 +613,7 @@ suspend fun startServer(application: Application): NodeServer =
 ```
 
 `listen` requires an installed `Http` plugin and returns after the socket is listening.
-`server.port` contains the bound port; `port = 0` chooses an available port.
+`NodeServer.port` contains the bound port; setting the port to zero chooses an available port.
 `close` stops accepting connections and waits for active HTTP requests to finish.
 The application instance handles concurrent requests, so application-owned mutable state must be safe for concurrent use.
 The adapter buffers incoming UTF-8 text, joins repeated request headers, and omits HEAD response bodies.
@@ -534,50 +626,97 @@ Read it at the application boundary as shown in the
 
 ## Fetch function adapter
 
-`koyane-fetch` exposes `FetchAdapter`, `FetchRequest`, `FetchResponse`, and `FetchHeaders`
-in `jsMain` and `wasmJsMain`. An adapter reuses an application and returns a native promise:
+`fetchFunction` registers a common application factory for Vercel, Supabase, and other Fetch hosts:
 
 ```kotlin
-@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+import dev.quwac.koyane.core.koyane
+import dev.quwac.koyane.fetch.fetchFunction
+import dev.quwac.koyane.http.Http
 
-import dev.quwac.koyane.core.Application
-import dev.quwac.koyane.fetch.FetchAdapter
-import dev.quwac.koyane.fetch.FetchRequest
-import dev.quwac.koyane.fetch.FetchResponse
-import kotlin.js.Promise
-
-class FetchFunction(application: Application) {
-    private val adapter = FetchAdapter(application)
-    fun handle(request: FetchRequest): Promise<FetchResponse> = adapter.handle(request)
+fun main() {
+    fetchFunction { environment ->
+        val greeting = environment.getStringOrNull("GREETING") ?: "Hello"
+        koyane { install(Http) { get("/hello") { text(greeting) } } }
+    }
 }
 ```
+
+The native `handleFetchRequest` export owns each request's resources.
+For an already-owned application, `FetchAdapter.handle` remains available
+with native `FetchRequest`, `FetchResponse`, `FetchHeaders`, and Promise types in the target source sets.
+Its suspending `FetchAdapter.handleRequest` variant runs in the caller's coroutine context.
 
 The adapter buffers the request's text body, preserves its URL and headers,
 and omits bodies for HEAD and bodyless HTTP statuses.
 Unhandled failures reject the promise; install `ErrorHandling` to return an HTTP error response.
-`WorkersAdapter` and the `Worker*` native types are aliases for this Fetch API.
+`CloudflareWorkerAdapter` and the `CloudflareWorker*` native types are aliases for this Fetch API.
 See the [Vercel and Supabase example](../examples/hello-fetch-functions/README.md) for host entry points and Wasm packaging.
 
 ## Node.js function adapter
 
-`NodeAdapter(application).handle(request, response, body)` accepts native `NodeRequest` and
-`NodeResponse` values and the original UTF-8 body as a `String`.
+`nodeFunction` registers the application factory in common code:
+
+```kotlin
+import dev.quwac.koyane.core.koyane
+import dev.quwac.koyane.http.Http
+import dev.quwac.koyane.node.nodeFunction
+
+fun main() {
+    nodeFunction { environment ->
+        val greeting = environment.getStringOrNull("GREETING") ?: "Hello"
+        koyane {
+            install(Http) { get("/hello") { text(greeting) } }
+        }
+    }
+}
+```
+
+Its receiver is `ResourceScope`; the factory's result is an `Application`.
+The native `handleNodeRequest` export owns resources for one invocation.
+Factory and release failures reject its promise; handler failures retain the native adapter's 500-response behavior.
+
+For an already-owned application, `NodeAdapter.handle` accepts native `NodeRequest` and `NodeResponse` values
+and the original UTF-8 body as a `String`.
 These target-specific types are in `dev.quwac.koyane.node` on both JS and Wasm.
 The returned native promise resolves after ending the response.
+The suspending `NodeAdapter.handleRequest` variant preserves the caller's coroutine context;
+cancellation propagates after the native failure response is attempted.
 It requires an installed `Http` plugin, shares the server adapter's response/error behavior,
 and opens no listening socket.
-For Cloud Run functions, pass `request.rawBody?.toString("utf8") ?? ""` from the JavaScript boundary;
-`request.body` can already be parsed and its stream consumed.
+For Cloud Run functions, the JavaScript boundary passes the original UTF-8 text from the request's raw body.
+The parsed body may no longer contain the original text, and its stream may already be consumed.
 See the [Cloud Run functions example](../examples/hello-cloud-run-functions/README.md).
 
 ## Lambda HTTP event adapter
 
-`LambdaAdapter(application).handle(event)` accepts a native `LambdaHttpEvent` and returns a
-`Promise<LambdaHttpResponse>` on JS and Wasm, in `dev.quwac.koyane.lambda`.
+`awsLambdaFunction` registers the application factory in common code:
+
+```kotlin
+import dev.quwac.koyane.core.koyane
+import dev.quwac.koyane.http.Http
+import dev.quwac.koyane.lambda.awsLambdaFunction
+
+fun main() {
+    awsLambdaFunction { environment ->
+        val greeting = environment.getStringOrNull("GREETING") ?: "Hello"
+        koyane {
+            install(Http) { get("/hello") { text(greeting) } }
+        }
+    }
+}
+```
+
+Its receiver is `ResourceScope`; the factory's result is an `Application`.
+The native `handleLambdaEvent` export owns resources for one HTTP invocation.
+
+For an already-owned application, `LambdaAdapter.handle` accepts a native `LambdaHttpEvent`
+and returns `Promise<LambdaHttpResponse>` on JS and Wasm, in `dev.quwac.koyane.lambda`.
+The suspending `LambdaAdapter.handleEvent` variant preserves the caller's coroutine context.
 An installed `Http` plugin is required.
 Only API Gateway HTTP API and Function URL payload 2.0 are supported.
 The adapter preserves `rawPath` and `rawQueryString`, reads UTF-8 text or Base64-encoded UTF-8 text,
-joins event cookies with `; `, and returns `statusCode`, `headers`, `cookies`, `body`, and `isBase64Encoded: false`.
+joins event cookies with a semicolon and space, and returns `statusCode`, `headers`, `cookies`, and `body`.
+The response's `isBase64Encoded` flag is false.
 Response `Set-Cookie` values go into the separate cookies array without splitting on commas.
 HEAD responses have an empty body.
 The HTTP header model stores one string per name; use one Set-Cookie value per response header entry.

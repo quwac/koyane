@@ -15,6 +15,12 @@ function parseShardValue(name, fallback) {
 }
 
 const cases = [
+  ["EnvironmentConversionPositive", []],
+  ["WrongEnvironmentConversion", ["RETURN_TYPE_MISMATCH", "ARGUMENT_TYPE_MISMATCH"]],
+  ["CommonAdaptersPositive", []],
+  ["WrongCommonAdapters", ["RETURN_TYPE_MISMATCH", "ARGUMENT_TYPE_MISMATCH"]],
+  ["CloudflareWorkerPositive", []],
+  ["WrongCloudflareWorker", ["RETURN_TYPE_MISMATCH", "ARGUMENT_TYPE_MISMATCH"]],
   ["Positive", []],
   ["WrongResponse", ["RETURN_TYPE_MISMATCH", "ARGUMENT_TYPE_MISMATCH"]],
   ["WrongBody", ["ARGUMENT_TYPE_MISMATCH"]],
