@@ -105,7 +105,7 @@ try {
       };
     } else {
       const image =
-        "public.ecr.aws/supabase/edge-runtime:v1.78.1@sha256:362e9177660ae4d3affb6978480cc6161a8ea0764f1c2c7f738348eda1c3fbf2";
+        "public.ecr.aws/supabase/edge-runtime:v1.79.2@sha256:24e7dcf98a5da18ee8bbb2f7ed9de8852bdc482a276d07a4a28312fc12b91deb";
       const name = `koyane-functions-${target}-${process.pid}`;
       execFileSync(
         "docker",
