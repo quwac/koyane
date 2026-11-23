@@ -12,7 +12,7 @@
     "@google-cloud/functions-framework": "5.0.5",
     "knip": "6.46.1",
     "oxfmt": "0.79.0",
-    "oxlint": "1.93.0"
+    "oxlint": "1.94.0"
   },
   "overrides": {
     "katex": "0.18.2",
