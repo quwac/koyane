@@ -1,4 +1,5 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension
 
 plugins {
     kotlin("multiplatform") version "2.4.21" apply false
@@ -29,6 +30,13 @@ val publishedProjects = setOf(
 allprojects {
     group = "dev.quwac.koyane"
     version = providers.gradleProperty("version").getOrElse("0.0.1-SNAPSHOT")
+}
+
+NpmExtension[rootProject].apply {
+    override("diff", "8.0.3")
+    override("glob", "14.0.2")
+    override("minimatch", "11.0.1")
+    override("serialize-javascript", "7.1.4")
 }
 
 subprojects {
