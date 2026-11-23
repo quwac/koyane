@@ -9,7 +9,6 @@ import dev.quwac.koyane.http.HttpCall
 import dev.quwac.koyane.http.HttpResponse
 import dev.quwac.koyane.http.HttpStatus
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 import dev.quwac.koyane.contentnegotiation.receive as receiveContent
@@ -25,8 +24,12 @@ class KotlinxJsonCodec<T : Any>(private val serializer: KSerializer<T>, private 
     /** JSON decoding failures represent invalid input; cancellation still propagates. */
     override fun decode(body: String): T? = try {
         format.decodeFromString(serializer, body)
-    } catch (failure: SerializationException) {
+    } catch (failure: CancellationException) {
+        throw failure
+    } catch (failure: IllegalArgumentException) {
         (failure.cause as? CancellationException)?.let { throw it }
+        null
+    } catch (_: IllegalStateException) {
         null
     }
 
